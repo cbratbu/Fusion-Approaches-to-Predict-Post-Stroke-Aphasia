@@ -52,17 +52,8 @@ class Model:
         GET = getData(augmentation_settings)
         self.all_features, self.data, self.outputs = GET.data()
         self.all_features = pd.Index(self.all_features)
-        # self.data = self.data.values
         self.outputs = self.outputs.ravel()
-        # print("data shape = ", self.data.shape)
-        # print("output shape = ", self.outputs.shape)
-        # print("features shape = ", self.all_features.shape)
-        # print("data type = ", self.data.dtype)
-        # if self.num_features != -1:
-        #     self.reduce()
-            
-            # print("reduction done")
-            # print("data shape now = ", self.data.shape)
+
         if self.stratified == True:
             self.data = pd.DataFrame(self.data)
             self.data["outputs"] = self.outputs 
@@ -97,19 +88,13 @@ class Model:
     def get_model(self, model, params=None):
 
         m = getModel(model)
-        # print("model is ", model)
-        # print("params here are ", params)
         params = allParams(model) if params == None else params
-
-        # print("parameters = ", self.parameters)
 
         if self.cv != "kTkV" and self.metric != "all-metrics":
             self.correct_metric()
-            # print("we got here bros")
             return GridSearchCV( m(), params, cv= self.CV_(), scoring = self.metric , return_train_score = True, verbose = self.verbose)
         else:
             params = dict(zip(self.param_keys, params))
-            # print("params here = ", params)
             return m(**params)
 
     def train(self, data, outputs):
@@ -149,10 +134,6 @@ class Model:
 
         print("training performance")
         self.get_score(X_train, y_train)
-
-        # print("test data performance")
-        # self.get_score(X_test, y_test)
-
         self.train_predictions_ = self.predict(X_train)
         # self.test_predictions_ = self.predict(X_test)
     
@@ -174,41 +155,27 @@ class Model:
             self.rfe = RFE(self.model, n_features_to_select = self.num_features, step=1)#self.FR_step)
             self.rfe = self.rfe.fit(data, outputs)
             features = np.arange(data.shape[1])
-            # print("data shape = ", data.shape)
-            # print(self.rfe.ranking_)
             features = features[self.rfe.ranking_==1]
             return features
 
     def reduce_data(self, data):
         data = pd.DataFrame(data)
-        # print("data shape = ", data.shape)
-        # print(" -- top col max = ", max(self.top_columns))
-        # print(" -- top col shape = ", len(self.top_columns))
-        
         data = data.iloc[:,self.top_columns]
-        # outputs = outputs.ravel()
         return data.values
         
         
     def get_KFfname(self):
         fname = ""
-        
         for i,param in enumerate(self.param_keys):
             fname += "[" + param[0] + "-" + str(self.curr_param[i]) + "]_" 
-        
         fname = fname[:-1] + ".csv"
         return fname
         
             
     def get_folder_name(self, fname):
-        # path =  PATH + "results/outputs"
-        path = create_folder(self.source, fname)#"outputs")
+        path = create_folder(self.source, fname)
         stratified = "" if self.stratified!=True else "stratified"
-        # if stratified != "":
-            # fname = self.cv + "_" + self.m + "_" + self.metric + "_top" + str(self.num_features) + "frs_" + stratified + "_" + self.feature_reduction + "_"
-        # else:
         fname = self.cv + "_" + self.m + "_" + self.metric + "_top" + str(self.num_features) + "frs_" + self.feature_reduction + "_"
-            
         return path + "/" + fname[:-1]
     
     
@@ -222,10 +189,7 @@ class Model:
         self.feature_writer = csv.writer(self.writerfile, delimiter=' ',  quotechar='|', quoting=csv.QUOTE_MINIMAL)
         
     def save_features(self):
-        # print("all-f = ", self.all_features)
-        # print("top-c = ", self.top_columns)
         features = self.all_features[self.top_columns]
-        # print("all-f done")
         self.feature_writer.writerow(list(features.values))
         
     
@@ -233,9 +197,6 @@ class Model:
         self.writerfile.close()
 
     def validate(self, data, outputs, kf2 = None):
-        
-        # print("data shape - ", data.shape)
-        # print("outptus shape = ", len(outputs))
         if kf2 != None: 
             if self.stratified:
                 class_labels = self.get_class_labels(splits = 5, outputs = outputs)
@@ -244,9 +205,7 @@ class Model:
             
         elif kf2 == None:
             if self.stratified != True: 
-                # print("stratified not true")
                 if self.cv != "LOO":
-                    # print("cv not LOO -- ", self.cv)
                     kf2 = KFold(n_splits=self.CV_(), shuffle = True)
                     class_labels = outputs
                 
@@ -254,14 +213,11 @@ class Model:
                 
                 kf2 = StratifiedKFold(n_splits=self.CV_(), shuffle = False)
                 class_labels = self.get_class_labels(splits = 5, outputs = outputs)
-                # kf2 = KFold(n_splits=10, shuffle = False)
 
             if self.cv == "LOO":
                 kf2 = KFold(n_splits=self.CV_(), shuffle=True)
                 class_labels = outputs
-
-        # self.features_init()
-        
+                
         train_performance = []
         train_performance_MAE = []
 
@@ -286,59 +242,44 @@ class Model:
             X_train, X_validate = data[train_index], data[validate_index]
             y_train, y_validate = outputs[train_index], outputs[validate_index]
             
-            # print("train data shape = ", X_train.shape, " -- val data shape = ", X_validate.shape)
             if self.num_features!=-1: #(self.num_features!=-1 and self.cv!="kTkV"):
 
                 self.top_columns = self.important_columns(X_train,y_train)
-                # print("real data shape = ", self.data.shape)
-                # print("data shape = ",X_train.shape)
-                # print(self.top_columns)
                 X_train = self.reduce_data(X_train)
                 X_validate = self.reduce_data(X_validate)
             
             self.save_features()
-            # print("data shape = ", X_train.shape)  
-            
 
             self.model.fit(X_train, y_train)
             train_predictions = self.model.predict(X_train)
             self.train_mean = np.mean(y_train)
-
 
             validate_predictions = self.model.predict(X_validate)
             
             if self.cv != "kTkV":
                 cumulative_validate_predictions.append(validate_predictions)
                 cumulative_ground_truths.append(y_validate)
-            
 
             models.append(self.model)
 
-            # ones_train = np.ones(len(y_train))*self.train_mean
-            # ones_validate = np.ones(len(y_validate))*self.train_mean
-
-            # train_performance.append(mean_squared_error(ones_train, y_train))
-            # validate_performance.append(mean_squared_error(ones_validate,y_validate))
-
-            # if self.metric == "MSE":
-            
             if mean_squared_error(validate_predictions,y_validate,squared=False) < maxLoss:
                 maxLoss = mean_squared_error(validate_predictions,y_validate,squared=False)
                 self.best_features = self.top_columns 
                 
             train_performance.append(mean_squared_error(train_predictions, y_train, squared=False))
             validate_performance.append(mean_squared_error(validate_predictions,y_validate,squared=False))
-            # elif self.metric == "MAE":
+
             train_performance_MAE.append(mean_absolute_error(train_predictions, y_train))
             validate_performance_MAE.append(mean_absolute_error(validate_predictions,y_validate))
 
         if self.cv != "kTkV":
             self.save_file(cumulative_validate_predictions, cumulative_ground_truths)
 
-        # self.feature_close()
         model = models[np.argmin(validate_performance)]
         self.top_columns = self.best_features
+
         return np.mean(train_performance), np.mean(validate_performance), np.mean(train_performance_MAE), np.mean(validate_performance_MAE), model
+
 
     def save_file(self, cumulative_validate_predictions, cumulative_ground_truths):
         
@@ -380,8 +321,6 @@ class Model:
             kf = KFold(n_splits=11, shuffle = True)
             class_labels = self.outputs
         else:
-            # kf = KFold(n_splits=11, shuffle = False)
-            # print("stratified kfold happened")
             kf = StratifiedKFold(n_splits=11, shuffle = False)
             class_labels = self.get_class_labels(splits=5, outputs = self.outputs)
 
@@ -400,51 +339,24 @@ class Model:
 
         models = []
 
-        # if self.stratified==True:
-        # print("data shape = ", self.data.shape)
-        # outputs = class_labels if self.stratified else self.outputs
-        # print("outputs shape = ", self.outputs.shape)
         for train_index, test_index in kf.split(self.data, class_labels):
-            # print("train length = ", len(train_index), " -- test length = ", len(test_index))
-            # print(self.data.dtype)
             X_train, X_test = self.data[train_index], self.data[test_index]
             y_train, y_test = self.outputs[train_index], self.outputs[test_index]
 
-            # print("test split shape = ", len(test_index))
             train_performance, validate_performance, train_performance_MAE, validate_performance_MAE, model = self.validate(X_train, y_train)
-            
-            # if self.num_features!=-1:
-                # if self.feature_reduction == "pearson":
-                # self.top_columns = self.important_columns(X_train,y_train)
-            
-            # self.save_features()
-
-            # self.train_mean = np.median(y_train)
-
-            # ones_train = np.ones(len(y_train))*self.train_mean
-            # ones_test = np.ones(len(y_test))*self.train_mean
-
 
             X_train = self.reduce_data(X_train)
             X_test = self.reduce_data(X_test)
 
             models.append(model)
 
-            # test_ones = np.ones(len(y_test))*self.train_mean
-            # X_test = self.reduce_data(X_test)
             test_predictions = model.predict(X_test)
             
             cumulative_test_predictions.append(test_predictions)
             cumulative_test_truths.append(y_test)
-            # test_performance = mean_squared_error(test_ones, y_test)
-            # if self.metric == "MSE":
+
             test_performance = mean_squared_error(test_predictions, y_test, squared=False)
-            # elif self.metric == "MAE":
             test_performance_MAE = mean_absolute_error(test_predictions, y_test)
-
-
-            # train_performance = mean_absolute_error(ones_train, y_train)
-            # test_performance = mean_absolute_error(ones_test, y_test)
 
             train_performances.append(train_performance)
             train_performances_MAE.append(train_performance_MAE)
@@ -456,23 +368,8 @@ class Model:
             test_performances_MAE.append(test_performance_MAE)
 
         self.save_file(cumulative_test_predictions, cumulative_test_truths)
-        # cumulative_validate_predictions = list(itertools.chain(*cumulative_validate_predictions))
-        # cumulative_validate_truths = list(itertools.chain(*cumulative_validate_truths))
-        # predictions = {
-        #     "predictions" : cumulative_validate_predictions,
-        #     "ground truth score": cumulative_validate_truths,
-        # }
-        # folder_name = self.get_folder_name()
-        
-        # if not os.path.exists(folder_name ):
-        #     os.makedirs(folder_name)
-
-        
-        # predictions = pd.DataFrame(predictions)
-        # self.kFfname = self.get_KFfname()
-
-        # predictions.to_csv(folder_name + "/" + self.kFfname)
         model = models[np.argmin(test_performances)]
+
         return np.mean(train_performances), np.mean(validate_performances), np.mean(test_performances), np.mean(train_performances_MAE), np.mean(validate_performances_MAE), np.mean(test_performances_MAE), model
 
     def get_params_(self):
@@ -499,7 +396,6 @@ class Model:
         param_list = self.get_params_()
 
         for self.curr_param in tqdm(param_list, "params"):
-            # self.model = self.get_model(self.m, param)
             self.features_init()
             self.model = self.get_model(self.m, self.curr_param)
 
@@ -539,7 +435,6 @@ class Model:
             "max depth" : '' if self.m == "SVR" else max([estimator.tree_.max_depth for estimator in model.estimators_])
 
 
-            # "params" : param_list
         }
         self.dataframe["'|'".join(list(self.parameters))] = param_list
 
@@ -592,20 +487,13 @@ class Model:
             self.cv_results_ = pd.DataFrame.from_dict(self.dataframe)
 
         if self.same_split:
-            # print("CV type = ", self.CV_)
             if self.stratified != True:
                 kf = KFold(n_splits=self.CV_(), shuffle = False)
             else:
-                # print("this should happen")
-                # print("this should not at all happen")
                 kf = StratifiedKFold(n_splits=self.CV_(), shuffle = False)
-                # class_labels = self.get_class_labels(splits = 5, outputs = self.outputs)
-                # print("class labels = ", class_labels)
-                # kf2 = KFold(n_splits=10, shuffle = False)
                 if self.cv == "LOO":
                     kf = KFold(n_splits=self.CV_(), shuffle=True) #change this later
-                    # class_labels = outputs
-                
+
         else:
             kf = None
                  
