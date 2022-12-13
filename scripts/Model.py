@@ -49,6 +49,8 @@ class Model:
         self.all_features, self.data, self.outputs = GET.data()
         self.all_features = pd.Index(self.all_features)
         
+        print("data shape = ", self.data.shape)
+        print("outputs shape = ", self.outputs.shape)
         self.outputs = self.outputs.ravel()
     
         self.forward()
@@ -141,6 +143,9 @@ class Model:
     #     self.train_predictions_ = self.predict(X_train)
     #     # self.test_predictions_ = self.predict(X_test)
 ##################################################################################################################################################################    
+
+
+
     def important_columns(self, data, outputs): 
         """This function finds the names of important features in the data, either based on two factors
             - Pearson Correlation with WAB scores 
