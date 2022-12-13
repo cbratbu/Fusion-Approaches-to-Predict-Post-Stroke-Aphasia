@@ -1,7 +1,7 @@
 
 
 PATH = "/projectnb/skiran/saurav/Fall-2022/src2/"
-PATH_DATA = "/projectnb/skiran/saurav/Fall-2022/RS/time_series"
+PATH_DATA = "/Users/saurav/Desktop/Margrit/Fall-22/WAB-prediction/data/"
 
 SVR_params = {
     "kernel" : ("linear", "rbf"),

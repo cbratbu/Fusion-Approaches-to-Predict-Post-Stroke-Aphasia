@@ -310,12 +310,14 @@ class Model:
             
             X_train, X_validate = data[train_index], data[validate_index]
             y_train, y_validate = outputs[train_index], outputs[validate_index]
+
             
             if self.num_features!=-1: #(self.num_features!=-1 and self.cv!="kTkV"):
 
                 self.top_columns = self.important_columns(X_train,y_train)
                 X_train = self.reduce_data(X_train)
                 X_validate = self.reduce_data(X_validate)
+
             
             self.save_features()
 
@@ -328,7 +330,7 @@ class Model:
             if self.cv != "kTkV":
                 cumulative_validate_predictions.append(validate_predictions)
                 cumulative_ground_truths.append(y_validate)
-
+                
             models.append(self.model)
 
             if mean_squared_error(validate_predictions,y_validate,squared=False) < maxLoss:
@@ -433,7 +435,7 @@ class Model:
         for train_index, test_index in kf.split(self.data, class_labels):
             X_train, X_test = self.data[train_index], self.data[test_index]
             y_train, y_test = self.outputs[train_index], self.outputs[test_index]
-
+            
             train_performance, validate_performance, train_performance_MAE, validate_performance_MAE, model = self.validate(X_train, y_train)
 
             X_train = self.reduce_data(X_train)
@@ -609,6 +611,7 @@ class Model:
             if self.metric != "all-metrics":
                 self.oneMetric_cv()
             elif self.metric == "all-metrics":
+                # print("all metric CV")
                 self.normal_CV()
     
         else:   

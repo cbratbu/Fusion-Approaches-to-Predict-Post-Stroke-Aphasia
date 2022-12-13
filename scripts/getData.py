@@ -31,7 +31,7 @@ class getData:
         
     
     def multi_modal(self):
-        data = pd.read_excel("/projectnb/skiran/saurav/Fall-2022/src2/data/" + "allModalityOutputs.xlsx" )
+        data = pd.read_excel(PATH_DATA + "/allModalityOutputs.xlsx" )
         self.outputs = data["ground truth score"].values
         self.all_features = data.columns
         self.correlation_data = data.drop(["ground truth score", "Unnamed: 0"], axis = 1)
@@ -58,7 +58,7 @@ class getData:
 
     def stan_optimal(self):
         print("using stan's data")
-        df = pd.read_excel("/projectnb/skiran/saurav/Fall-2022/RS" + "/compiled_dataset_RSbivariate_without_controls_v7.xlsx", header = [0,1])
+        df = pd.read_excel(PATH_DATA  + "/compiled_dataset_RSbivariate_without_controls_v7.xlsx", header = [0,1])
         outputs = df[("behavioral", "wab_aq_bd")].values
         outputs = outputs.reshape(len(outputs),1)
     
@@ -93,7 +93,7 @@ class getData:
 
             
     def init2(self):
-        data = pd.read_excel("/projectnb/skiran/saurav/Fall-2022/RS" + "/compiled_dataset_RSbivariate_without_controls_v7.xlsx", header = [0,1])
+        data = pd.read_excel(PATH_DATA + "/compiled_dataset_RSbivariate_without_controls_v7.xlsx", header = [0,1])
         self.outputs = data[("behavioral", "wab_aq_bd")].values
 
         d1 = data["percent_spared_in_white_matter"]
@@ -109,14 +109,14 @@ class getData:
 
     def sortFiles(self) -> None:
         # READING THE DATA,
-        self.column_names = pd.read_csv(self.path + "/" + "ROIs.csv", header = None)
+        self.column_names = pd.read_csv(self.path + "/ROIs.csv", header = None)
         # self.all_features = self.column_names
         self.files = [f for f in listdir(self.path) if isfile(join(self.path, f))]
         self.files.remove("ROIs.csv")
         self.files = np.sort(self.files) # file names for the data"
 
         # READING THE FILE TO GET PATIENT SCORES",
-        real_df = pd.read_excel("/projectnb/skiran/saurav/Fall-2022/RS" + "/RS_bivariate_AQ_continuous.xlsx")
+        real_df = pd.read_excel( os.path.abspath("data") + "/RS_bivariate_AQ_continuous.xlsx")
         rdf = real_df[["participant", "AQ"]]
 
         # EXTRACTING THE WAB SCORES OF THE PATIENTS
@@ -171,6 +171,7 @@ class getData:
 
     def init(self):
         # GETTING THINGS READY TO GET THE DATA
+        self.path = "../../MRI/RS/time_series"
         self.sortFiles()
 
         # GETTING THE DATA

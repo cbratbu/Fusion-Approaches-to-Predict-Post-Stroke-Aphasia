@@ -1,8 +1,10 @@
 from libraries import * 
 from params import PATH
 
+PATH = os.path.abspath("../") + "/"
+
 def createF(path):
-    if not os.path.exists( path):
+    if not os.path.exists(path):
         os.makedirs(path,exist_ok=True)
 
 def create_folder(data, type = None):
