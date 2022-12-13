@@ -142,9 +142,7 @@ class Model:
     #     # self.test_predictions_ = self.predict(X_test)
 ##################################################################################################################################################################    
     def important_columns(self, data, outputs): 
-        """_summary_
-    
-        This function finds the names of important features in the data, either based on two factors
+        """This function finds the names of important features in the data, either based on two factors
             - Pearson Correlation with WAB scores 
             - Recurrent Feature Elimination (RFE)
 
