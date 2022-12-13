@@ -142,6 +142,19 @@ class Model:
     #     # self.test_predictions_ = self.predict(X_test)
 ##################################################################################################################################################################    
     def important_columns(self, data, outputs): 
+        """_summary_
+    
+        This function finds the names of important features in the data, either based on two factors
+            - Pearson Correlation with WAB scores 
+            - Recurrent Feature Elimination (RFE)
+
+        Args:
+            data (numpy array): Input data without output column
+            outputs (numpy array): 1D array of WAB scores / any other output
+
+        Returns:
+            numpy array : finds the column index numbers and returns it 
+        """
         
         if self.feature_reduction == "pearson":
 
@@ -164,12 +177,27 @@ class Model:
             return features
 
     def reduce_data(self, data):
+        """filter important columns from the input data
+
+        Args:
+            data (numpy array): Input data without output columns
+
+        Returns:
+            numpy array: Input data with selected top features
+        """
+        
         data = pd.DataFrame(data)
         data = data.iloc[:,self.top_columns]
         return data.values
         
         
     def get_KFfname(self):
+        """create a csv file name based on model parameter setting
+
+        Returns:
+            string: csv file name based on the model parameters 
+        """
+        
         fname = ""
         for i,param in enumerate(self.param_keys):
             fname += "[" + param[0] + "-" + str(self.curr_param[i]) + "]_" 
@@ -178,6 +206,14 @@ class Model:
         
             
     def get_folder_name(self, fname):
+        """creates a folder with the training setting in the results folder
+
+        Args:
+            fname (string): csv file name to store model parameter-wise outputs
+
+        Returns:
+            string: folder_name + file_name to save model parameter-wise outputs. 
+        """
         path = create_folder(self.source, fname)
         stratified = "" if self.stratified!=True else "stratified"
         fname = self.cv + "_" + self.m + "_" + self.metric + "_top" + str(self.num_features) + "frs_" + self.feature_reduction + "_"
@@ -185,23 +221,45 @@ class Model:
     
     
     def features_init(self):
+        """creates a folder to save outputs of important features
+
+            Initiate the csv writer to write the features in a file during cross validation
+
+        """
         folder = self.get_folder_name("features")
         if not os.path.exists(folder):
             os.makedirs(folder,exist_ok=True)
         file = self.get_KFfname()
+
         self.writerfile = open( folder + "/" + file , 'w', newline='')
-        
         self.feature_writer = csv.writer(self.writerfile, delimiter=' ',  quotechar='|', quoting=csv.QUOTE_MINIMAL)
         
+        
     def save_features(self):
+        """writes the important features to a csv file using the csv-writer
+        
+        """
         features = self.all_features[self.top_columns]
         self.feature_writer.writerow(list(features.values))
         
     
     def feature_close(self):
+        """Closes the csv-writer to complete writing important features to a file
+        """
         self.writerfile.close()
+        
 
     def validate(self, data, outputs, kf2 = None):
+        """Does Cross valiation for kTkV training setting, Training for other settings
+
+        Args:
+            data (numpy array): input data
+            outputs (numpy array): WAB scores / output values
+            kf2 (cross validation setting, optional): kFold CV object as input. If not given, creates 10-Fold CV. Defaults to None.
+
+        Returns:
+            float, float, float, float, object: train MSE mean, Validate MSE mean, train MAE mean, validate MAE mean, Best validate model
+        """
 
         ##################################################################################################################################################################
         # Do not disturb the following few lines on k-fold setting
@@ -290,9 +348,16 @@ class Model:
 
 
     def save_file(self, cumulative_validate_predictions, cumulative_ground_truths):
+        """saves the predictions and ground truth values for each model setting for each training setting.
+
+        Args:
+            cumulative_validate_predictions (list[float]): list of predictions for each patient
+            cumulative_ground_truths (list[float]): list of ground truth scores for each patient
+        """
         
         cumulative_validate_predictions = list(itertools.chain(*cumulative_validate_predictions))
         cumulative_ground_truths = list(itertools.chain(*cumulative_ground_truths))
+        
         predictions = {
             "predictions" : cumulative_validate_predictions,
             "ground truth score": cumulative_ground_truths,
@@ -301,7 +366,6 @@ class Model:
         
         if not os.path.exists(folder_name ):
             os.makedirs(folder_name,exist_ok=True)
-
         
         predictions = pd.DataFrame(predictions)
         self.kFfname = self.get_KFfname()
@@ -309,7 +373,17 @@ class Model:
         predictions.to_csv(folder_name + "/" + self.kFfname)   
         
 
+
     def get_class_labels(self, splits, outputs):
+        """Helper function. Used in stratifold setting. Not important for regular setting. 
+
+        Args:
+            splits (int): number of buckets in training data during k-Fold CV
+            outputs (array[float]): WAB scores of each patient. 
+
+        Returns:
+            array[float]: labels of each training example before splitting the data.
+        """
         x = np.ones(len(outputs))
         
         counter = 0
@@ -325,6 +399,12 @@ class Model:
             
 
     def train_kTkV(self):
+        """Training loop for kTkV setting. Initiates Training set and Testing set here. Sends training data to validate function.
+
+        Returns:
+            float, float, float, float, float, float, object: trainMSE, testMSE, valMSE, trainMAE, valMAE, testMAE, best test model.
+        """
+        
         if self.stratified!=True:
             kf = KFold(n_splits=11, shuffle = True)
             class_labels = self.outputs
@@ -380,7 +460,13 @@ class Model:
 
         return np.mean(train_performances), np.mean(validate_performances), np.mean(test_performances), np.mean(train_performances_MAE), np.mean(validate_performances_MAE), np.mean(test_performances_MAE), model
 
+
     def get_params_(self):
+        """returns the combination of different model parameters
+
+        Returns:
+            list: combinations of different parameters.
+        """
         self.parameters = allParams(self.m)
         self.param_keys = list(self.parameters)
         
@@ -389,6 +475,8 @@ class Model:
 
 
     def kTkV(self):
+        """initiaties the kTkV training setting. Selects a model parameters, then sends the data to train_kTkV to start the training process.
+        """
 
         validate_performances = []
         validate_performances_MAE = []
@@ -445,10 +533,12 @@ class Model:
 
         }
         self.dataframe["'|'".join(list(self.parameters))] = param_list
-
         self.cv_results_ = pd.DataFrame.from_dict(self.dataframe)
 
+
     def normal_CV(self):
+        """Initiates the training setting for normal Cross Validation. Uses validate_kTkV for training.
+        """
 
         train_performances = []
         test_performances = []
@@ -504,11 +594,13 @@ class Model:
 
         else:
             kf = None
-                 
+            
         train_loop()
 
 
     def forward(self):
+        """Based on training setting, this redirects training to one of the initializers.
+        """
 
         if self.cv != "kTkV":
             if self.metric != "all-metrics":
