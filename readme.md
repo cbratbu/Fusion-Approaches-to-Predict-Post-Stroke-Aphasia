@@ -1,5 +1,6 @@
-Parameter Understanding 
+to test run
 
-random Forest : { "depth", "Parameter Split per node" }
+Go to scripts in terminal 
 
-SVM : {“Kernel”, “C”, “epsilon”, “tol”, “gamma”}
+
+python3 scripts/main.py -CV kTkV -model RF -metric all-metrics -f 10 -stratified -data LS -features_R pearson -frstep 1
