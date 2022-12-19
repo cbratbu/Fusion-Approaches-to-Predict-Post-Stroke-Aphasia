@@ -70,6 +70,52 @@ class Model:
         # self.forward()
 
 
+    def reduce(self):
+        self.outputs = self.outputs.reshape(self.outputs.shape[0], 1)
+        self.data = np.hstack((self.data, self.outputs))
+        self.data = pd.DataFrame(self.data)
+
+        corrs = self.data.corr().abs()
+        importances = corrs.values[-1][:-1]
+
+        top_columns = np.argpartition(importances, -self.num_features)[-self.num_features:]
+
+        # print("top k columns = ", top_columns)
+        self.data = self.data.iloc[:,top_columns]
+        self.outputs = self.outputs.ravel()
+        self.data = self.data.values
+        # print("data shape = ", self.data.shape)
+
+
+    def init(self, augmentation_settings): # gets the data to train and test
+        GET = getData(augmentation_settings)
+        self.all_features, self.data, self.outputs = GET.data()
+        self.all_features = pd.Index(self.all_features)
+        self.outputs = self.outputs.ravel()
+        print("data shape = ", self.data.shape)
+        print("outputs shape = ", self.outputs.shape)
+        # print("features", self.num_features)
+        if self.num_features != -1:
+            self.reduce()
+            
+            # print("reduction done")
+            # print("data shape now = ", self.data.shape)
+        if self.stratified == True:
+            self.data = pd.DataFrame(self.data)
+            self.data["outputs"] = self.outputs 
+            # if self.order =="ascending":
+            self.data = self.data.sort_values(by = "outputs", ascending = True)
+            # elif self.order == "descending":
+                # self.data = self.data.sort_values(by = "outputs", ascending = False)
+            self.outputs = self.data["outputs"].values
+            self.data = self.data.drop(["outputs"], axis = 1)
+            self.data = self.data.values
+            
+        self.forward()
+
+
+
+
     def CV_(self):
         if self.cv == "LOO":
             return 55
@@ -318,7 +364,7 @@ class Model:
             y_train, y_validate = outputs[train_index], outputs[validate_index]
 
             
-            if self.num_features!=-1: #(self.num_features!=-1 and self.cv!="kTkV"):
+            if self.num_features!=-1 and self.cv!="kTkV":
                 self.top_columns = self.important_columns(X_train,y_train)
                 X_train = self.reduce_data(X_train)
                 X_validate = self.reduce_data(X_validate)
@@ -329,9 +375,7 @@ class Model:
 
             self.model.fit(X_train, y_train)            
             train_predictions = self.model.predict(X_train)
-            # print("validate shape = ", X_validate.shape)
             validate_predictions = self.model.predict(X_validate)
-            # return
 
             
             if self.cv != "kTkV":
@@ -442,10 +486,17 @@ class Model:
             X_train, X_test = self.data[train_index], self.data[test_index]
             y_train, y_test = self.outputs[train_index], self.outputs[test_index]
             
-            train_performance, validate_performance, train_performance_MAE, validate_performance_MAE, model = self.validate(X_train, y_train)
 
+            if self.num_features!=-1:
+                
+                self.top_columns = self.important_columns(X_train,y_train)
+                X_train = self.reduce_data(X_train)
+                X_test = self.reduce_data(X_test) 
+                
             X_train = self.reduce_data(X_train)
             X_test = self.reduce_data(X_test)
+
+            train_performance, validate_performance, train_performance_MAE, validate_performance_MAE, model = self.validate(X_train, y_train)
             
             models.append(model)
 
