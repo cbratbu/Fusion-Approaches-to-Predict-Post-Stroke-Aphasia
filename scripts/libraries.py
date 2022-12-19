@@ -13,6 +13,9 @@ from sklearn.decomposition import PCA
 from sklearn.model_selection import KFold, StratifiedKFold
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 from sklearn.feature_selection import RFE
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+
 
 from sklearn.svm import SVR
 import itertools
