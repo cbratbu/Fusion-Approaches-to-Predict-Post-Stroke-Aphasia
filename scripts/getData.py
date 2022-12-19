@@ -116,7 +116,7 @@ class getData:
         self.files = np.sort(self.files) # file names for the data"
 
         # READING THE FILE TO GET PATIENT SCORES",
-        real_df = pd.read_excel( os.path.abspath("../data") + "/RS_bivariate_AQ_continuous.xlsx")
+        real_df = pd.read_excel( os.path.abspath("data") + "/RS_bivariate_AQ_continuous.xlsx")
         rdf = real_df[["participant", "AQ"]]
 
         # EXTRACTING THE WAB SCORES OF THE PATIENTS
@@ -171,7 +171,7 @@ class getData:
 
     def init(self):
         # GETTING THINGS READY TO GET THE DATA
-        self.path = os.path.abspath("../../../MRI/RS/time_series")
+        self.path = os.path.abspath("../../MRI/RS/time_series")
         print("path = ", self.path)
         self.sortFiles()
 
