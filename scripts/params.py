@@ -5,9 +5,9 @@ PATH_DATA = "/Users/saurav/Desktop/Margrit/Fall-22/WAB-prediction/data/"
 
 SVR_params = {
     "kernel" : ("linear", "rbf"),
-    "C" :  [1,10,50,100], #200,500
-    "epsilon" : [1e-4,1e-3,1e-2,1e-2,1],
-    "tol" : [1e-2,1e-2,1],#1e-3,
+    "C" :  [1e-2,1e-1,1,10, 100], #200,500
+    "epsilon" : [1e-5,1e-4,1e-3,1e-2,1e-2,1],
+    "tol" : [1e-5,1e-4, 1e-3, 1e-2,1],#1e-3,
     "gamma" : [1e-6,1e-5,1e-2,1e-1, 1] #1e-9,1e-8,
 }
 
