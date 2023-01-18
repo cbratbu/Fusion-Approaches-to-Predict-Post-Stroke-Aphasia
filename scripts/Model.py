@@ -42,32 +42,30 @@ class Model:
         
 
     def init(self, augmentation_settings): # gets the data to train and test
-        
-        # class to get the data from 'getData.py'
-        GET = getData(augmentation_settings) 
-        
+        GET = getData(augmentation_settings)
         self.all_features, self.data, self.outputs = GET.data()
         self.all_features = pd.Index(self.all_features)
-        
+        self.outputs = self.outputs.ravel()
         print("data shape = ", self.data.shape)
         print("outputs shape = ", self.outputs.shape)
-        self.outputs = self.outputs.ravel()
-    
-        self.forward()
-        # Check for stratified sampling part later 
-        
-        # if self.stratified == True:
-        #     self.data = pd.DataFrame(self.data)
-        #     self.data["outputs"] = self.outputs 
-        #     # if self.order =="ascending":
-        #     self.data = self.data.sort_values(by = "outputs", ascending = True)
-        #     # elif self.order == "descending":
-        #         # self.data = self.data.sort_values(by = "outputs", ascending = False)
-        #     self.outputs = self.data["outputs"].values
-        #     self.data = self.data.drop(["outputs"], axis = 1)
-        #     self.data = self.data.values
+        # print("features", self.num_features)
+        if self.num_features != -1:
+            self.reduce()
             
-        # self.forward()
+            # print("reduction done")
+            # print("data shape now = ", self.data.shape)
+        if self.stratified == True:
+            self.data = pd.DataFrame(self.data)
+            self.data["outputs"] = self.outputs 
+            # if self.order =="ascending":
+            self.data = self.data.sort_values(by = "outputs", ascending = True)
+            # elif self.order == "descending":
+                # self.data = self.data.sort_values(by = "outputs", ascending = False)
+            self.outputs = self.data["outputs"].values
+            self.data = self.data.drop(["outputs"], axis = 1)
+            self.data = self.data.values
+            
+        self.forward()
 
 
     def CV_(self):
