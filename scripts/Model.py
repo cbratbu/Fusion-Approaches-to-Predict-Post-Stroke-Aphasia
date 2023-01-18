@@ -34,11 +34,12 @@ class Model:
         corrs = self.data.corr().abs()
         importances = corrs.values[-1][:-1]
 
+        print("importances = ", importances[:15])
         top_columns = np.argpartition(importances, -self.num_features)[-self.num_features:]
         
         df = dict()
         df["top_columns"] = top_columns
-        df["importances"] = importances
+        df["importances"] = self.all_features[top_columns]
         df = pd.DataFrame(df)
         df.to_csv("features_importances.csv")
     
@@ -71,7 +72,7 @@ class Model:
             self.outputs = self.data["outputs"].values
             self.data = self.data.drop(["outputs"], axis = 1)
             self.data = self.data.values
-        return 
+        # return 
         self.forward()
 
 
@@ -316,7 +317,10 @@ class Model:
             X_train, X_validate = data[train_index], data[validate_index]
             y_train, y_validate = outputs[train_index], outputs[validate_index]
             
-            if self.num_features!=-1: #(self.num_features!=-1 and self.cv!="kTkV"):
+            print("data shape = ", data.shape, " -- X_train shape = ", X_train.shape, " -- X_val shape = ", X_validate.shape)
+            print("X_train type = ", X_train.dtype)
+            
+            if self.num_features!=-1 and X_train.shape[0] != self.num_features: #(self.num_features!=-1 and self.cv!="kTkV"):
 
                 self.top_columns = self.important_columns(X_train,y_train)
                 X_train = self.reduce_data(X_train)
