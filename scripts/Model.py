@@ -317,14 +317,14 @@ class Model:
             X_train, X_validate = data[train_index], data[validate_index]
             y_train, y_validate = outputs[train_index], outputs[validate_index]
             
-            print("data shape = ", data.shape, " -- X_train shape = ", X_train.shape, " -- X_val shape = ", X_validate.shape)
-            print("X_train type = ", X_train.dtype)
+            # print("data shape = ", data.shape, " -- X_train shape = ", X_train.shape, " -- X_val shape = ", X_validate.shape)
+            # print("X_train type = ", X_train.dtype)
             
-            if self.num_features!=-1 and X_train.shape[0] != self.num_features: #(self.num_features!=-1 and self.cv!="kTkV"):
+            # if self.num_features!=-1 and X_train.shape[0] != self.num_features: #(self.num_features!=-1 and self.cv!="kTkV"):
 
-                self.top_columns = self.important_columns(X_train,y_train)
-                X_train = self.reduce_data(X_train)
-                X_validate = self.reduce_data(X_validate)
+            #     self.top_columns = self.important_columns(X_train,y_train)
+            #     X_train = self.reduce_data(X_train)
+            #     X_validate = self.reduce_data(X_validate)
             
             self.save_features()
 
