@@ -309,11 +309,11 @@ class Model:
             X_train, X_validate = data[train_index], data[validate_index]
             y_train, y_validate = outputs[train_index], outputs[validate_index]
             
-            if self.num_features!=-1: #(self.num_features!=-1 and self.cv!="kTkV"):
+            # if self.num_features!=-1: #(self.num_features!=-1 and self.cv!="kTkV"):
 
-                self.top_columns = self.important_columns(X_train,y_train)
-                X_train = self.reduce_data(X_train)
-                X_validate = self.reduce_data(X_validate)
+            #     self.top_columns = self.important_columns(X_train,y_train)
+            #     X_train = self.reduce_data(X_train)
+            #     X_validate = self.reduce_data(X_validate)
             
             self.save_features()
 
