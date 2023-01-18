@@ -41,19 +41,19 @@ class Model:
         self.data = self.data.values
         
 
-    def init(self, augmentation_settings): # gets the data to train and test
+    # def init(self, augmentation_settings): # gets the data to train and test
         
-        # class to get the data from 'getData.py'
-        GET = getData(augmentation_settings) 
+    #     # class to get the data from 'getData.py'
+    #     GET = getData(augmentation_settings) 
         
-        self.all_features, self.data, self.outputs = GET.data()
-        self.all_features = pd.Index(self.all_features)
+    #     self.all_features, self.data, self.outputs = GET.data()
+    #     self.all_features = pd.Index(self.all_features)
         
-        print("data shape = ", self.data.shape)
-        print("outputs shape = ", self.outputs.shape)
-        self.outputs = self.outputs.ravel()
+    #     print("data shape = ", self.data.shape)
+    #     print("outputs shape = ", self.outputs.shape)
+    #     self.outputs = self.outputs.ravel()
     
-        self.forward()
+    #     self.forward()
         # Check for stratified sampling part later 
         
         # if self.stratified == True:
