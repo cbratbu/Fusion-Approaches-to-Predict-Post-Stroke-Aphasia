@@ -34,9 +34,9 @@ class Model:
         corrs = self.data.corr().abs()
         importances = corrs.values[-1][:-1]
 
-        top_columns = np.argpartition(importances, -self.num_features)[-self.num_features:]
+        self.top_columns = np.argpartition(importances, -self.num_features)[-self.num_features:]
 
-        self.data = self.data.iloc[:,top_columns]
+        self.data = self.data.iloc[:,self.top_columns]
         self.outputs = self.outputs.ravel()
         self.data = self.data.values
         
