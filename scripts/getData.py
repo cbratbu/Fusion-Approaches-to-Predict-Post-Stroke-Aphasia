@@ -93,7 +93,7 @@ class getData:
 
             
     def init2(self):
-        data = pd.read_excel(PATH_DATA + "/compiled_dataset_RSbivariate_without_controls_v7.xlsx", header = [0,1])
+        data = pd.read_excel(PATH_DATA + "compiled_dataset_RSbivariate_without_controls_v7.xlsx", header = [0,1])
         self.outputs = data[("behavioral", "wab_aq_bd")].values
 
         d1 = data["percent_spared_in_white_matter"]
