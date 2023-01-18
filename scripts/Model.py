@@ -35,57 +35,18 @@ class Model:
         importances = corrs.values[-1][:-1]
 
         top_columns = np.argpartition(importances, -self.num_features)[-self.num_features:]
-
-        self.data = self.data.iloc[:,top_columns]
-        self.outputs = self.outputs.ravel()
-        self.data = self.data.values
         
-
-    # def init(self, augmentation_settings): # gets the data to train and test
-        
-    #     # class to get the data from 'getData.py'
-    #     GET = getData(augmentation_settings) 
-        
-    #     self.all_features, self.data, self.outputs = GET.data()
-    #     self.all_features = pd.Index(self.all_features)
-        
-    #     print("data shape = ", self.data.shape)
-    #     print("outputs shape = ", self.outputs.shape)
-    #     self.outputs = self.outputs.ravel()
+        df = dict()
+        df["top_columns"] = top_columns
+        df["importances"] = importances
+        df = pd.DataFrame(df)
+        df.to_csv("features_importances.csv")
     
-    #     self.forward()
-        # Check for stratified sampling part later 
-        
-        # if self.stratified == True:
-        #     self.data = pd.DataFrame(self.data)
-        #     self.data["outputs"] = self.outputs 
-        #     # if self.order =="ascending":
-        #     self.data = self.data.sort_values(by = "outputs", ascending = True)
-        #     # elif self.order == "descending":
-        #         # self.data = self.data.sort_values(by = "outputs", ascending = False)
-        #     self.outputs = self.data["outputs"].values
-        #     self.data = self.data.drop(["outputs"], axis = 1)
-        #     self.data = self.data.values
-            
-        # self.forward()
-
-
-    def reduce(self):
-        self.outputs = self.outputs.reshape(self.outputs.shape[0], 1)
-        self.data = np.hstack((self.data, self.outputs))
-        self.data = pd.DataFrame(self.data)
-
-        corrs = self.data.corr().abs()
-        importances = corrs.values[-1][:-1]
-
-        top_columns = np.argpartition(importances, -self.num_features)[-self.num_features:]
-
-        # print("top k columns = ", top_columns)
         self.data = self.data.iloc[:,top_columns]
         self.outputs = self.outputs.ravel()
         self.data = self.data.values
-        # print("data shape = ", self.data.shape)
-
+        
+        
 
     def init(self, augmentation_settings): # gets the data to train and test
         GET = getData(augmentation_settings)
@@ -110,10 +71,8 @@ class Model:
             self.outputs = self.data["outputs"].values
             self.data = self.data.drop(["outputs"], axis = 1)
             self.data = self.data.values
-            
+        return 
         self.forward()
-
-
 
 
     def CV_(self):
@@ -143,56 +102,51 @@ class Model:
             return GridSearchCV( m(), params, cv= self.CV_(), scoring = self.metric , return_train_score = True, verbose = self.verbose)
         else:
             params = dict(zip(self.param_keys, params))
-            return make_pipeline(
-                                StandardScaler(),
-                                m(**params))
+            return m(**params)
 
-##################################################################################################################################################################
 # the following functions are not necessary as of now
 ##################################################################################################################################################################
-    #
     # def train(self, data, outputs):
     #     self.model.fit(data, outputs)
-    #
+
     # def predict(self, data):
     #     return self.model.predict(data)
-    #
+
     # def get_score(self,data,outputs, return_ = False): #gives out R2 scores
     #     print("R2 fit score = ", self.model.score(data, outputs), "\n" )
     #     if return_:
     #         return self.model.score(data, outputs)
-    #
+
     # def CrossValResults(self):
     #     print(self.model.cv_results_)
     #     print('\n')
-    #
+
     # def modify_data(self, data):
     #     self.pca.fit(data)
     #     raise NotImplementedError()
-    #
+
     # def get_data(self):
     #     X_train, X_test, y_train, y_test = train_test_split( self.data, self.outputs, test_size=0.09, random_state=42)
-    #
+
     #     if self.cv != "kTkV":
     #         X_train, y_train = self.data, self.outputs
-    #
+
     #     print("train data shape = ", X_train.shape)
     #     print("train labels shape = ", y_train.shape, "\n")
-    #
+
     #     print("test data shape = ", X_test.shape)
     #     print("test labels shape = ", y_test.shape, "\n")
-    #
+
     #     return X_train, X_test, y_train, y_test
-    #
+
     # def oneMetric_cv(self):
     #     X_train, X_test, y_train, y_test = self.get_data()
     #     self.train(X_train, y_train)
-    #
+
     #     print("training performance")
     #     self.get_score(X_train, y_train)
     #     self.train_predictions_ = self.predict(X_train)
     #     # self.test_predictions_ = self.predict(X_test)
-    #    
 ##################################################################################################################################################################    
 
 
@@ -325,7 +279,7 @@ class Model:
         else:
             if self.stratified != True: 
                 if self.cv != "LOO":
-                    kf2 = KFold(n_splits=self.CV_(), shuffle = False)
+                    kf2 = KFold(n_splits=self.CV_(), shuffle = True)
                     class_labels = outputs
             else:
                 
@@ -357,31 +311,29 @@ class Model:
 
         for train_index, validate_index in kf2.split(data, class_labels):
 
-            # Model definition
             self.model = self.get_model(self.m, self.curr_param) # gets the model initialization of "m" type and "curr_param" parameters
             
             X_train, X_validate = data[train_index], data[validate_index]
             y_train, y_validate = outputs[train_index], outputs[validate_index]
-
             
-            if self.num_features!=-1 and self.cv!="kTkV":
+            if self.num_features!=-1: #(self.num_features!=-1 and self.cv!="kTkV"):
+
                 self.top_columns = self.important_columns(X_train,y_train)
                 X_train = self.reduce_data(X_train)
                 X_validate = self.reduce_data(X_validate)
-
-
-            # print("important columns = ", self.top_columns)
+            
             self.save_features()
 
-            self.model.fit(X_train, y_train)            
+            self.model.fit(X_train, y_train)
             train_predictions = self.model.predict(X_train)
-            validate_predictions = self.model.predict(X_validate)
+            self.train_mean = np.mean(y_train)
 
+            validate_predictions = self.model.predict(X_validate)
             
             if self.cv != "kTkV":
                 cumulative_validate_predictions.append(validate_predictions)
                 cumulative_ground_truths.append(y_validate)
-                
+
             models.append(self.model)
 
             if mean_squared_error(validate_predictions,y_validate,squared=False) < maxLoss:
@@ -399,6 +351,7 @@ class Model:
 
         model = models[np.argmin(validate_performance)]
         self.top_columns = self.best_features
+
         return np.mean(train_performance), np.mean(validate_performance), np.mean(train_performance_MAE), np.mean(validate_performance_MAE), model
 
 
@@ -461,7 +414,7 @@ class Model:
         """
         
         if self.stratified!=True:
-            kf = KFold(n_splits=11, shuffle = False)
+            kf = KFold(n_splits=11, shuffle = True)
             class_labels = self.outputs
         else:
             kf = StratifiedKFold(n_splits=11, shuffle = False)
@@ -485,19 +438,12 @@ class Model:
         for train_index, test_index in kf.split(self.data, class_labels):
             X_train, X_test = self.data[train_index], self.data[test_index]
             y_train, y_test = self.outputs[train_index], self.outputs[test_index]
-            
 
-            if self.num_features!=-1:
-                
-                self.top_columns = self.important_columns(X_train,y_train)
-                X_train = self.reduce_data(X_train)
-                X_test = self.reduce_data(X_test) 
-                
+            train_performance, validate_performance, train_performance_MAE, validate_performance_MAE, model = self.validate(X_train, y_train)
+
             X_train = self.reduce_data(X_train)
             X_test = self.reduce_data(X_test)
 
-            train_performance, validate_performance, train_performance_MAE, validate_performance_MAE, model = self.validate(X_train, y_train)
-            
             models.append(model)
 
             test_predictions = model.predict(X_test)
@@ -590,7 +536,7 @@ class Model:
             "validate rank" : val_performance_ranking,
             "test rank" : test_performance_ranking,
             
-            "max depth" : '' if self.m == "SVR" else max([estimator.tree_.max_depth for estimator in model[-1].estimators_])
+            "max depth" : '' if self.m == "SVR" else max([estimator.tree_.max_depth for estimator in model.estimators_])
 
 
         }
@@ -668,7 +614,6 @@ class Model:
             if self.metric != "all-metrics":
                 self.oneMetric_cv()
             elif self.metric == "all-metrics":
-                # print("all metric CV")
                 self.normal_CV()
     
         else:   
