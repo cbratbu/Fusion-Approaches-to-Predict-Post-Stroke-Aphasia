@@ -36,6 +36,17 @@ class Model:
 
         self.top_columns = np.argpartition(importances, -self.num_features)[-self.num_features:]
 
+        important_columns = self.all_features[self.top_columns]
+        imps = importances[self.top_columns]
+        
+        df = {
+            "columns" : important_columns,
+            "importances" : imps
+        }
+        
+        df = pd.DataFrame(df)
+        self.bfi = df
+        
         self.data = self.data.iloc[:,self.top_columns]
         self.outputs = self.outputs.ravel()
         self.data = self.data.values
@@ -232,6 +243,7 @@ class Model:
             os.makedirs(folder,exist_ok=True)
         file = self.get_KFfname()
 
+        self.bfi.to_csv( folder + "/" + "important_features.csv")
         self.writerfile = open( folder + "/" + file , 'w', newline='')
         self.feature_writer = csv.writer(self.writerfile, delimiter=' ',  quotechar='|', quoting=csv.QUOTE_MINIMAL)
         
@@ -240,6 +252,8 @@ class Model:
         """writes the important features to a csv file using the csv-writer
         
         """
+        
+        
         features = self.all_features[self.top_columns]
         self.feature_writer.writerow(list(features.values))
         
