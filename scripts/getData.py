@@ -125,7 +125,8 @@ class getData:
     #     self.wabaq = list(rdf["AQ"])  # Participant scores"
     
     def sortFiles(self) -> None:
-        self.path =  "/projectnb/skiran/Isaac/data_for_saurav/"
+        mypath = "/projectnb/skiran/Isaac/data_for_saurav/"
+        self.path =  mypath
         subjectIDs = pd.read_csv(mypath+"Subject_IDs.csv", header = None)
         
         filenames = listdir(mypath)
@@ -133,7 +134,7 @@ class getData:
         csvfiles.remove('Subject_IDs.csv')
         csvfiles = sorted(csvfiles)
         
-        pdf = {"patientIDs" : list(subjectIDs.values.flatten().astype(str))
+        pdf = {"patientIDs" : list(subjectIDs.values.flatten().astype(str)),
                "alias" : list(csvfiles)
               }
         pdf_alias = pd.DataFrame(pdf)
@@ -170,13 +171,16 @@ class getData:
         self.correlation_data = corr_data
         self.outputs = scores
         
+        print("correlation data shape first new data = ", np.array(self.correlation_data).shape)
+        print("output shape first new datz = ", np.array(self.outputs).shape)
+        
         
 
 
     def noAugment(self) -> None:
 
-        self.correlation_data = []
-        self.outputs = []
+        # self.correlation_data = []
+        # self.outputs = []
 
         def modify_data():
             for index,data in enumerate(self.correlation_data):
