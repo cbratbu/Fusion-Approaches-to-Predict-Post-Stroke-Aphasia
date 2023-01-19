@@ -49,7 +49,7 @@ class getData:
         top_columns = np.argpartition(importances, -num_features)[-num_features:]
     
         data = data.iloc[:,top_columns]
-        self.all_features += list(columns[top_columns])
+        self.all_features += list(data.columns)
         
         outputs = outputs.ravel()
         data = data.values
@@ -107,22 +107,70 @@ class getData:
             
         
 
+    # def sortFiles(self) -> None:
+    #     # READING THE DATA,
+    #     self.column_names = pd.read_csv(self.path + "/" + "ROIs.csv", header = None)
+    #     # self.all_features = self.column_names
+    #     self.files = [f for f in listdir(self.path) if isfile(join(self.path, f))]
+    #     self.files.remove("ROIs.csv")
+    #     self.files = np.sort(self.files) # file names for the data"
+
+    #     # READING THE FILE TO GET PATIENT SCORES",
+    #     real_df = pd.read_excel("/projectnb/skiran/saurav/Fall-2022/RS" + "/RS_bivariate_AQ_continuous.xlsx")
+    #     rdf = real_df[["participant", "AQ"]]
+
+    #     # EXTRACTING THE WAB SCORES OF THE PATIENTS
+    #     parts = list(rdf["participant"])
+    #     self.participants= parts[:30] + parts[31:32] + parts[35:51] + parts[53:60] + parts[61:63] + parts[30:31] # participant IDs"
+    #     self.wabaq = list(rdf["AQ"])  # Participant scores"
+    
     def sortFiles(self) -> None:
-        # READING THE DATA,
-        self.column_names = pd.read_csv(self.path + "/" + "ROIs.csv", header = None)
-        # self.all_features = self.column_names
-        self.files = [f for f in listdir(self.path) if isfile(join(self.path, f))]
-        self.files.remove("ROIs.csv")
-        self.files = np.sort(self.files) # file names for the data"
+        self.path =  "/projectnb/skiran/Isaac/data_for_saurav/"
+        subjectIDs = pd.read_csv(mypath+"Subject_IDs.csv", header = None)
+        
+        filenames = listdir(mypath)
+        csvfiles = [ filename for filename in filenames if filename.endswith( ".csv" ) ]
+        csvfiles.remove('Subject_IDs.csv')
+        csvfiles = sorted(csvfiles)
+        
+        pdf = {"patientIDs" : list(subjectIDs.values.flatten().astype(str))
+               "alias" : list(csvfiles)
+              }
+        pdf_alias = pd.DataFrame(pdf)
+        
+        
+        df = pd.read_excel("/projectnb/skiran/saurav/Fall-2022/RS" + "/compiled_dataset_RSbivariate_without_controls_v7.xlsx", header = [0,1])
+        outputs = df[("behavioral", "wab_aq_bd")]
+        
+        pdf = { "patientIDs": list(df[("participant", "participant")]),
+                "scores" : list(outputs) 
+              }
+        pdf_scores = pd.DataFrame(pdf)
+        
+        
+        
+        corr_data = []
+        scores = []
+        for patient, score in pdf_scores.values:
+            if patient != "BU29c07":
+                fname = mypath  + list(pdf_alias[pdf_alias["patientIDs"] == patient]["alias"])[0]
+                scores.append(score)
+                df = pd.read_csv(fname)
+                columns = df.columns
+                df.index = columns
+                corr_data.append(df)
+            else:
+                fname = mypath  + list(pdf_alias[pdf_alias["patientIDs"] == patient+"NU"]["alias"])[0]
+                df = pd.read_csv(fname)
+                columns = df.columns
+                df.index = columns
+                scores.append(score)
+                corr_data.append(df)
 
-        # READING THE FILE TO GET PATIENT SCORES",
-        real_df = pd.read_excel("/projectnb/skiran/saurav/Fall-2022/RS" + "/RS_bivariate_AQ_continuous.xlsx")
-        rdf = real_df[["participant", "AQ"]]
-
-        # EXTRACTING THE WAB SCORES OF THE PATIENTS
-        parts = list(rdf["participant"])
-        self.participants= parts[:30] + parts[31:32] + parts[35:51] + parts[53:60] + parts[61:63] + parts[30:31] # participant IDs"
-        self.wabaq = list(rdf["AQ"])  # Participant scores"
+        self.correlation_data = corr_data
+        self.outputs = scores
+        
+        
 
 
     def noAugment(self) -> None:
@@ -143,16 +191,17 @@ class getData:
             self.correlation_data = np.array(self.correlation_data)
             self.outputs =  np.array(self.outputs)
 
-        for patient_index, patient_file in enumerate(self.files):
+        # for patient_index, patient_file in enumerate(self.files):
 
             # READING THE PATIENT TIME SERIES FMRI DATA
-            file = pd.read_csv(self.path + "/" + self.files[patient_index], header = None)
-            file.columns = list(self.column_names[0])
-            file = file.reindex(sorted(file.columns), axis = 1)
+            # file = pd.read_csv(self.path + "/" + self.files[patient_index], header = None)
+            # file.columns = list(self.column_names[0])
+            # file = file.reindex(sorted(file.columns), axis = 1)
 
+            
             # CALCULATE THE CORRELATION MATRIX\n",
-            self.correlation_data.append(file.corr())
-            self.outputs.append(self.wabaq[patient_index])
+            # self.correlation_data.append(file.corr())
+            # self.outputs.append(self.wabaq[patient_index])
 
         modify_data()
 
