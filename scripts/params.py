@@ -18,3 +18,9 @@ RFParams = {
     "n_estimators" :[50,100, 300]#[50,100,200,300,500,1000]
     # "min_samples_split\" : [2,3,4,5,7,10,15]\n",
 }
+
+ABParams = {
+    "n_estimators" : [20,50,100,150,300,400],
+    "learning_rate" : [1e-4, 1e-3, 1e-2, 1e-2,1,10],
+    "loss" : ("square", "linear")
+}
