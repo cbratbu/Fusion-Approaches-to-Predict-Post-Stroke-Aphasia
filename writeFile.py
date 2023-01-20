@@ -35,7 +35,7 @@ def writeResults():
         writer.writerow(["CV type", "model", "metrics", "num features", "reduction method","stratified","data source", "train RMSE", "validate RMSE", "test RMSE",
                                                                         "train RMSE rank", "validate RMSE rank", "test RMSE rank",
                                                                         "train MAE", "validate MAE", "test MAE",
-                                                                        "train MAE rank", "validate MAE rank", "test MAE rank", "model parameters", "PARAM1", "PARAM2", "PARAM3", "PARAM4"])
+                                                                        "train MAE rank", "validate MAE rank", "test MAE rank", "model parameters", "PARAM1", "PARAM2", "PARAM3", "PARAM4", "PARAM5"])
                                                                         
         files = os.listdir(PATH + "results")
         dataFolders = [f for f in files if not os.path.isfile(PATH + "results/" + f)]
@@ -51,6 +51,7 @@ def writeResults():
         
                 # print(file)
                 param_id = data.columns[-1]
+                # print("paramID = ",param_id)
                 data = data.sort_values(by = "validate rank") if "validate rank" in data.columns else data.sort_values(by = "validate MSE rank") if "validate MSE rank" in data.columns else data.sort_values(by = 'test MSE rank')
                 data_subset = data.iloc[:num_ranks]
         
@@ -63,20 +64,25 @@ def writeResults():
                     train_MAE, train_MAE_rank = data_subset.iloc[i]["train performance MAE" if "train performance MAE" in data_subset.columns else "train MAE"], data_subset.iloc[i]["train MAE rank"if "train MAE rank" in data_subset.columns else "train rank"]
                     test_MAE, test_MAE_rank = data_subset.iloc[i]["test performances MAE" if "test performances MAE" in data_subset.columns else "test MAE" if "test MAE" in data_subset.columns else "test performance MAE"], data_subset.iloc[i]["test MAE rank" if "train MAE rank" in data_subset.columns else "test rank"]
                     validate_MAE, validate_MAE_rank = data_subset.iloc[i]["validate performance MAE"] if "validate performance MAE" in data_subset.columns else "-", data_subset.iloc[i]["validate rank"] if "validate rank" in data_subset.columns else data_subset.iloc[i]["validate MAE rank"] if "validate MAE rank" in data_subset.columns else "-"
-        
+                    
+                    # print("cols = ", data_subset.columns)
+                    support_vectors = data_subset.iloc[i]["support vectors"]
+                    
                     params = data_subset.iloc[i][param_id]
                     param_dict = dict(zip(param_id.split("|"), params.split(",")))
+                    
+                    
         
                     if len(train_settings) >= 4:
                         writer.writerow([train_settings[0], train_settings[1], train_settings[2], train_settings[3], train_settings[-1][:-4], train_settings[4],dataFolder, train_MSE, validate_MSE, test_MSE,
                                                                                                                     train_MSE_rank, validate_MSE_rank, test_MSE_rank,
                                                                                                                     train_MAE, validate_MAE, test_MAE,
-                                                                                                                    train_MAE_rank, validate_MAE_rank, test_MAE_rank, param_dict])
+                                                                                                                    train_MAE_rank, validate_MAE_rank, test_MAE_rank, param_dict, support_vectors])
                     else:
                         writer.writerow([train_settings[0], train_settings[1], train_settings[2], train_settings[3], train_settings[-1][:-4], train_settings[4], dataFolder, train_MSE, validate_MSE, test_MSE,
                                                                                                                     train_MSE_rank, validate_MSE_rank, test_MSE_rank,
                                                                                                                     train_MAE, validate_MAE, test_MAE,
-                                                                                                                    train_MAE_rank, validate_MAE_rank, test_MAE_rank, param_dict ])
+                                                                                                                    train_MAE_rank, validate_MAE_rank, test_MAE_rank, param_dict, support_vectors ])
     
 
 def writeFiles():
