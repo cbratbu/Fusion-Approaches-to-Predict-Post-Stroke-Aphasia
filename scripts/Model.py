@@ -543,7 +543,9 @@ class Model:
             "validate rank" : val_performance_ranking,
             "test rank" : test_performance_ranking,
             
-            "max depth" : '' if self.m == "SVR" else max([estimator.tree_.max_depth for estimator in model.estimators_])
+            "max depth" : '' if self.m != "RF" else max([estimator.tree_.max_depth for estimator in model.estimators_]),
+            "support vectors" : '' if self.m != "SVR" else str(len(model.support_vectors_))
+            
 
 
         }
@@ -593,7 +595,8 @@ class Model:
                 "test MAE" : test_performances_MAE,
                 "test MAE rank" : test_performance_rankings_MAE,
                 
-                "max depth" : '' if self.m == "SVR" else max([estimator.tree_.max_depth for estimator in model.estimators_])
+                "max depth" : '' if self.m != "RF" else max([estimator.tree_.max_depth for estimator in model.estimators_]),
+                "support vectors" : '' if self.m != "SVR" else str(len(model.support_vectors_))
             }
 
             self.dataframe["'|'".join(list(self.parameters))] = param_list
