@@ -446,8 +446,8 @@ class Model:
 
             train_performance, validate_performance, train_performance_MAE, validate_performance_MAE, model = self.validate(X_train, y_train)
 
-            X_train = self.reduce_data(X_train)
-            X_test = self.reduce_data(X_test)
+            # X_train = self.reduce_data(X_train)
+            # X_test = self.reduce_data(X_test)
 
             models.append(model)
 
