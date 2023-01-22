@@ -5,13 +5,16 @@ import argparse
 
 
 PATH =  "/projectnb/skiran/saurav/Fall-2022/src2/"
+
+datasets = ["RS", "FA", "WM", "GM", "LS", "DM", "BH", "stan_optimal"]
+
 parameters = {
                 "-CV" : ["kTkV"], #["LOO", "LFiveO", "kTkV"],
                 "-model" : ["SVR"],#["RF", "SVR"], #["RF","SVR"], #["RF", "SVR"],
                 "-metric" : ["all-metrics"],
                 "-f" :  None,#[5, 10,20,25,40,50,80,100,150,200,250,275,320,370,400,500,600,800,1000,1127], #[10],#,20,25,40,60,80,105], #[5, 10,20,25,40,50,80,100,150,200,250,275,320,370,400,500,600,800,1000,1127]
                 "-stratified":  [''],
-                "-data" : [ "RS", "stan_optimal", "LS"],#["RS", "stan_optimal", "LS"]
+                "-data" : [ "RS", "stan_optimal", "LS"],
                 "-features_R" : ["pearson"],#["pearson", "RFE"],
                 "-frstep" : [1]
                 #['True', ''], # [True, ''],
@@ -20,12 +23,27 @@ parameters = {
 }
 
 
+
 features = {
             "stan_optimal" : [2,4,9,13,17],#,20],
             "RS" : [10,20,25,40,50,80,100,150],#,200,250,275,320,370,400,500,600,800,1000],
             "LS" : [5,10,20,25,40,50,80,100],
             "MM" : [3],
             }
+
+def get_dataset_combinations():
+    all_combinations = []
+    for i in range(1,len(datasets)+1):
+        temp = list( map(list, list(itertools.combinations(datasets, i))))
+        all_combinations += temp 
+
+    for i in range(len(all_combinations)):
+        all_combinations[i] = "-".join(all_combinations[i])
+        
+    len(all_combinations)
+    all_combinations.append("stan_optimal")
+    return all_combinations
+
 
 def get_different_combinations():
     total_combs = []
@@ -38,6 +56,10 @@ def get_different_combinations():
     
 
 if __name__ == "__main__":
+
+        combinations_datasets = get_dataset_combinations()
+        parameters["-data"] = combinations_datasets
+
         parser = argparse.ArgumentParser(description="enter makeFile Arguments")
         parser.add_argument("-d", type = str, help = "Modality : [ runSeperate, runCombined ] ")
         # parser.add_argument("-o", type = str, help = "Enter output file name")
@@ -47,6 +69,7 @@ if __name__ == "__main__":
             parameters["-data"] = ["MM"]
             
         combinations = get_different_combinations()
+        
 
         runFname = args.d
         f2 = open(PATH + runFname +".sh", "w")
