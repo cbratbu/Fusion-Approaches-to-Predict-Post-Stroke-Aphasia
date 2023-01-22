@@ -81,6 +81,7 @@ class getData:
         data["RS"] = self.reduce_features(data["RS"], outputs, 11, df["restingstate_bivariate_correlations"].columns)
         
         self.all_features += list(df["demographic_info"].columns)
+        
         total_data = np.hstack((data["FA"], data["PS_G"]))
         total_data = np.hstack((total_data, data["RS"]))
         # total_data = np.hstack((total_data, data["AQ"]))
@@ -171,7 +172,7 @@ class getData:
 
     def init(self):
         # GETTING THINGS READY TO GET THE DATA
-        self.path = os.path.abspath("../../MRI/RS/time_series")
+        self.path = os.path.abspath("../../../MRI/RS/time_series")
         print("path = ", self.path)
         self.sortFiles()
 
