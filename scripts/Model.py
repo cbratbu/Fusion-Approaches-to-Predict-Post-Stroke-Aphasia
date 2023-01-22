@@ -44,6 +44,7 @@ class Model:
         df.to_csv("features_importances.csv")
     
         self.data = self.data.iloc[:,top_columns]
+        self.top_columns = top_columns
         self.outputs = self.outputs.ravel()
         self.data = self.data.values
         
