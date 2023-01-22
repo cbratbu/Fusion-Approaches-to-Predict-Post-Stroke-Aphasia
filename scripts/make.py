@@ -7,11 +7,11 @@ import argparse
 PATH =  "/projectnb/skiran/saurav/Fall-2022/src2/"
 parameters = {
                 "-CV" : ["kTkV"], #["LOO", "LFiveO", "kTkV"],
-                "-model" : ["SVR"],#["RF", "SVR"], #["RF","SVR"], #["RF", "SVR"],
+                "-model" : ["SVR","RF","AdaBoost"],#,"SVR"],#["RF", "SVR"], #["RF","SVR"], #["RF", "SVR"],
                 "-metric" : ["all-metrics"],
                 "-f" :  None,#[5, 10,20,25,40,50,80,100,150,200,250,275,320,370,400,500,600,800,1000,1127], #[10],#,20,25,40,60,80,105], #[5, 10,20,25,40,50,80,100,150,200,250,275,320,370,400,500,600,800,1000,1127]
                 "-stratified":  [''],
-                "-data" : [ "RS", "stan_optimal", "LS"],#["RS", "stan_optimal", "LS"]
+                "-data" : ["RS", "stan_optimal", "LS"],#, "stan_optimal", "LS"],#["RS", "stan_optimal", "LS"]
                 "-features_R" : ["pearson"],#["pearson", "RFE"],
                 "-frstep" : [1]
                 #['True', ''], # [True, ''],
@@ -21,8 +21,8 @@ parameters = {
 
 
 features = {
-            "stan_optimal" : [2,4,9,13,17],#,20],
-            "RS" : [10,20,25,40,50,80,100,150],#,200,250,275,320,370,400,500,600,800,1000],
+            "stan_optimal" : [20],#,20],
+            "RS" : [10,20,25,40,50,80,100,150,200,250,275,320],#,370,400,500,600,800,1000],
             "LS" : [5,10,20,25,40,50,80,100],
             "MM" : [3],
             }
