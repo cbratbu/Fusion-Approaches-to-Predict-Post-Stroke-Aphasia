@@ -20,14 +20,68 @@ class getData:
         elif dta == "LS": # Done
             print("loading WM GM lesion remaining data")
             self.init2()
-        # elif dta == "LS":
-        #     print("loading Lesion sizes per region")
-        #     self.init3()
-            
+                        
         elif dta == "MM": # Done
             self.multi_modal()
+        else:
+            self.dta = dta
+            self.init3()
         
-    # def init3():
+        
+    def read_data(self):
+        
+        df = pd.read_excel("/Users/saurav/Desktop/Margrit/Fall-22/WAB-prediction/data/compiled_dataset_RSbivariate_without_controls_v7.xlsx", header = [0,1])
+        outputs = df[("behavioral", "wab_aq_bd")].values
+        outputs = outputs.reshape(len(outputs),1)
+
+        data = {}
+
+        # AQ - Aphasia Quotient
+        data["AQ"] = pd.DataFrame(df[('behavioral', "wab_aq_bd")].values, columns = ["wab_aq_bd"]) 
+
+        # DM - Demographics
+        data["DM"] = df["demographic_info"]
+
+        # FA - Fractional Anisotropy
+        featuresFAL = ["fa_avg_ccmaj", "fa_avg_ccmin", "fa_avg_lifof", "fa_avg_lilf", "fa_avg_lslf", "fa_avg_lunc", "fa_avg_larc"]
+        featuresFAR = ["fa_avg_rifof", "fa_avg_rilf", "fa_avg_rslf", "fa_avg_runc", "fa_avg_rarc"]
+        FA_L = df["average_FA_values"][featuresFAL].fillna(0).values
+        FA_R = df["average_FA_values"][featuresFAR].fillna(df["average_FA_values"][featuresFAR].mean()).values
+        data["FA"] = pd.DataFrame(np.hstack((FA_L, FA_R)), columns = featuresFAL+featuresFAR)
+
+        # PS_G - percent grey matter per region  
+        data["PSG"] = df["percent_spared_in_gray_matter"]
+
+        # PS_W - percent white matter per region  
+        data["PSW"] = df["percent_spared_in_white_matter"]
+
+        # RS - Resting state data
+        data["RS"] = df["restingstate_bivariate_correlations"]
+
+        # LS - Lesion size (Total)   ; Need to add lesion size per region
+        data["LS"] = pd.DataFrame(df[("lesion_size", "lesion_size_ls")].values, columns = ["lesion_size_ls"])
+
+        self.datadict = data 
+        self.outputs = outputs
+        
+    def init3(self):
+        self.read_data()
+    
+        features = self.dta.split("-")
+    
+        correlations = []
+        for i,dataset in enumerate(features):
+            if i==0:
+                correlations = self.datadict[dataset].values
+                featureList = list(self.datadict[dataset].columns)
+                
+            else:
+                correlations = np.hstack((correlations, self.datadict[dataset].values))
+                featureList += list(self.datadict[dataset].columns)
+        
+        self.correlation_data = correlations
+        self.all_features = featureList
+        
         
     
     def multi_modal(self):
@@ -172,7 +226,7 @@ class getData:
 
     def init(self):
         # GETTING THINGS READY TO GET THE DATA
-        self.path = os.path.abspath("../../../MRI/RS/time_series")
+        self.path = os.path.abspath("../../MRI/RS/time_series")
         print("path = ", self.path)
         self.sortFiles()
 
