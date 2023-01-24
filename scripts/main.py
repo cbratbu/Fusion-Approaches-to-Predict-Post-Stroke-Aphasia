@@ -84,6 +84,7 @@ if __name__ == "__main__":
     
     # print("vals = ", Augmentation_settings["top_k"])
     
-    model = Model(Augmentation_settings)
+    model = Model(Augmentation_settings)  # this follows late fusion approach 
+    
     save_file(model, Augmentation_settings)
 
