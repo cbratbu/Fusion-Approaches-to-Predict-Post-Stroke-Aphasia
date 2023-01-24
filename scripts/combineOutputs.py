@@ -1,10 +1,11 @@
 import pandas as pd
 import re
 import os 
+import itertools
 # from params import *
 
-final_path = "/projectnb/skiran/saurav/Fall-2022/src2/results/"
-data_path = "/projectnb/skiran/saurav/Fall-2022/src2/data/"
+final_path = "/Users/saurav/Desktop/Margrit/Fall-22/WAB-prediction/results/"
+data_path = "/Users/saurav/Desktop/Margrit/Fall-22/WAB-prediction/data/"
 
 def getBestParams(dataSource):
     output_file = final_path + dataSource + "/" + dataSource + "_aggregate.csv"
@@ -16,9 +17,9 @@ def getBestParams(dataSource):
     model = data.iloc[0]["model"]
 
     if model == "RF":
-        model_params = data.iloc[:,20:23]
+        model_params = data.iloc[:,21:23]
     else:
-        model_params = data.iloc[:,20:]
+        model_params = data.iloc[:,21:]
     
     fname = ""
     
@@ -62,7 +63,7 @@ def getBestModel(dataSource):
     return best_model
 
 
-def organizeOutputData(dataPaths, sources):
+def organizeOutputData(dataPaths, sources, opFname):
     allModalityPreds = dict()
     for i,bestM in enumerate(dataPaths):
         data = pd.read_csv(bestM)
@@ -72,22 +73,36 @@ def organizeOutputData(dataPaths, sources):
         allModalityPreds[sources[i]] = predictions
     allModalityPreds["ground truth score"] = ground_truths
     allModalityPreds = pd.DataFrame(allModalityPreds)
-    allModalityPreds.to_excel(data_path + "allModalityOutputs.xlsx")
+    allModalityPreds.to_excel(data_path + "opCombinations/" + opFname)
         
-        
+def getfileName(dataSources):
+    str_ = ""
+    for i,source in enumerate(dataSources):
+        str_ += source[:-8]        
+        str_ += "-" if i != len(dataSources)-1 else "-ModCombinations.xlsx"
+        print("str_ = ", str_)        
+
+def writeCombinationOutputs(modalityCombinations):
+    raise NotImplementedError
 
 if __name__ == "__main__":
 
     files = os.listdir(final_path)
-    dataSources = [f for f in files if not os.path.isfile(final_path + f)]    
-    # print("sources = ", dataSources)
-    dataPaths = []
-    for source in dataSources:
-        bestParams = getBestParams(source)
-        bestModel = getBestModel(source)
-        dataPaths.append( final_path + source + "/outputs/" + bestModel + "/" + bestParams)
-    organizeOutputData(dataPaths, dataSources)
+    dataSources = [f for f in files if not os.path.isfile(final_path + f)]   
+    dataSourceCombinations = list(itertools.combinations(dataSources, 1))
     
+    # print("combinations = ", dataSourceCombinations)
+    
+    
+    for dataSources in dataSourceCombinations:
+        dataPaths = []
+        opFname = getfileName(dataSources)
+        for source in dataSources:
+            bestParams = getBestParams(source)
+            bestModel = getBestModel(source)
+            dataPaths.append( final_path + source + "/outputs/" + bestModel + "/" + bestParams)
+        organizeOutputData(dataPaths, dataSources, opFname)
+
     
     
     
