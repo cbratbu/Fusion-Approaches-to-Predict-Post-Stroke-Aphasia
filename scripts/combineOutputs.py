@@ -16,9 +16,9 @@ def getBestParams(dataSource):
     model = data.iloc[0]["model"]
 
     if model == "RF":
-        model_params = data.iloc[:,20:23]
+        model_params = data.iloc[:,21:23]
     else:
-        model_params = data.iloc[:,20:]
+        model_params = data.iloc[:,21:]
     
     fname = ""
     
