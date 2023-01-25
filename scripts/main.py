@@ -11,7 +11,8 @@ from utils import *
 def save_file(model, Augmentation_settings):
 
     # result_save_path = PATH + "results/model_performances/"
-    result_save_path = create_folder(Augmentation_settings["data"], "performance")
+    model_ = Augmentation_settings["model"]
+    result_save_path = create_folder(Augmentation_settings["data"], "performance", model_)
     As = Augmentation_settings
 
     if As["Cross Validation Type"] == "kTkV" or As["metric"] == "all-metrics":
