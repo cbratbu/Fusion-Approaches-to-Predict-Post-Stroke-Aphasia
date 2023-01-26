@@ -12,7 +12,9 @@ def save_file(model, Augmentation_settings):
 
     # result_save_path = PATH + "results/model_performances/"
     model_ = Augmentation_settings["model"]
-    result_save_path = create_folder(Augmentation_settings["data"], "performance", model_)
+    level_ = Augmentation_settings["level"]
+    approach_ = Augmentation_settings["approach"]
+    result_save_path = create_folder(Augmentation_settings["data"], "performance", model_, level_, approach_)
     As = Augmentation_settings
 
     if As["Cross Validation Type"] == "kTkV" or As["metric"] == "all-metrics":
@@ -47,6 +49,9 @@ if __name__ == "__main__":
     parser.add_argument("-data", nargs = "?", type = str, help = "Choose data to train the models on [RS , WM-GM-CSF spared]", default = "RS")
     parser.add_argument("-features_R", nargs = "?", type = str, help = "feature reduction method [pearson , RFE]")
     parser.add_argument("-frstep", nargs = "?", type = int, help = "number of features reduced per step", default = 1)
+    parser.add_argument("-approach", nargs = "?", type = str, help = "prediction approach : [Late Fusion, Early Fusion] - [LF, EF]", default = "LF")
+    parser.add_argument("-level", nargs = "?", type = str, help = "LF, EF level: [level1, level2]", default = "level1")
+    
     
     # parser.add_argument("-order", nargs = "?", type = str, help = "stratified [ascending/descending] order ", default = None)
     args = parser.parse_args()
@@ -78,7 +83,10 @@ if __name__ == "__main__":
         "data" : args.data,
         
         "feature reduction" : args.features_R,
-        "features reduced per step" : args.frstep if 'frstep' in args else 1
+        "features reduced per step" : args.frstep if 'frstep' in args else 1,
+        
+        "approach" : args.approach if "approach" in args else "LF",
+        "level" : args.level if "level" in args else "level1"
         # "order" : args.order if 'stratified' in args else None, #implement false condition
     }
 
