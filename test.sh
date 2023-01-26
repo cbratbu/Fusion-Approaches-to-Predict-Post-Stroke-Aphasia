@@ -16,6 +16,6 @@ module load pytorch/1.11.0
 ./make.sh
 wait
 ./runSeperate.sh
-# wait
-# ./runCombined.sh
+wait
+./runCombined.sh
 
