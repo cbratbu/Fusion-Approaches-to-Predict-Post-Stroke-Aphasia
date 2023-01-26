@@ -1,13 +1,17 @@
 from libraries import *
 from params import * 
+from utils import *
+from make import *
+import re
 
 class getData:
     def __init__(self, settings):
         self.path = PATH_DATA
         self.augment = settings["Augment"]
-        # self.path = PATH
+        self.model = settings["model"]
         self.repeat_features = settings["repeat features"]
-        # self.init()
+        self.approach = settings["approach"]
+        self.level = settings["level"]
         self.all_features = []
         
         dta = settings["data"]
@@ -20,11 +24,16 @@ class getData:
         # elif dta == "LS": # Done
         #     print("loading WM GM lesion remaining data")
             # self.init2()
-        elif dta == "MM": # Done
-            self.multi_modal()
+        # elif dta == "MM": # Done
+        #     self.multi_modal()
         else:
             self.dta = dta
             self.init3()
+        
+    def readRSData(self):
+        self.init()
+        self.correlation_data = pd.DataFrame(self.correlation_data, columns = list(self.all_features))
+        return self.correlation_data
         
     
     def read_data(self):
@@ -40,6 +49,8 @@ class getData:
 
         # DM - Demographics
         data["DM"] = df["demographic_info"]
+        
+        # print("demographic data shape = ", data["DM"].shape)
 
         # FA - Fractional Anisotropy
         featuresFAL = ["fa_avg_ccmaj", "fa_avg_ccmin", "fa_avg_lifof", "fa_avg_lilf", "fa_avg_lslf", "fa_avg_lunc", "fa_avg_larc"]
@@ -54,33 +65,132 @@ class getData:
         # PS_W - percent white matter per region  
         data["PSW"] = df["percent_spared_in_white_matter"]
 
-        # RS - Resting state data
-        data["RS"] = df["restingstate_bivariate_correlations"]
-
-        # LS - Lesion size (Total)   ; Need to add lesion size per region
+        # LS - Lesion size as a single metric 
         data["LS"] = pd.DataFrame(df[("lesion_size", "lesion_size_ls")].values, columns = ["lesion_size_ls"])
+
+        # RS - Resting state data
+        data["RS"] = self.readRSData()
+
+        self.all_features = []
+        self.stan_optimal()
+        print("all features len = ", len(self.all_features))
+        data["stan"] = pd.DataFrame(self.correlation_data, columns = list(self.all_features)) 
+        
+        # LS - Lesion size (Total)   ; Need to add lesion size per region, Deal with LS feature later.
 
         self.datadict = data 
         self.outputs = outputs
+        self.all_features = []
+        
     
     
-    def init3():
+    def LF_level1(self):
         self.read_data()
-    
         features = self.dta.split("-")
-    
         correlations = []
         for i,dataset in enumerate(features):
             if i==0:
                 correlations = self.datadict[dataset].values
                 featureList = list(self.datadict[dataset].columns)
-                
             else:
                 correlations = np.hstack((correlations, self.datadict[dataset].values))
                 featureList += list(self.datadict[dataset].columns)
-        
         self.correlation_data = correlations
         self.all_features = featureList
+        
+    
+    def LF_level2(self):
+        print("data = ", str(self.dta))
+        data_combination = self.dta.split("_")[0]
+        data_combination = data_combination.split("-")
+        dataPath = "/projectnb/skiran/saurav/Fall-2022/src2/data/" + "lateFusionData/"
+        fname = None
+        if len(data_combination) == len(datasets):
+            data_combination = self.model
+            fname = data_combination + "_allModalityOutputs.xlsx"
+        else:
+            data_combination = "_".join(data_combination)
+            fname =  self.model + "_" + data_combination + "_ModalityOutputs.xlsx"
+        dataPath += self.model + "/"  + fname
+        
+        self.correlation_data = pd.read_excel(dataPath)
+        self.outputs = self.correlation_data["ground truth score"].values
+        self.all_features = list(self.correlation_data.columns) 
+        self.correlation_data = self.correlation_data.drop(["ground truth score", "Unnamed: 0"], axis = 1)
+        self.correlation_data = self.correlation_data.values
+        
+
+    def getReshapedData(self, dataSizes, dataSources):
+        self.read_data()
+        
+        for dataSource in dataSources:
+            self.all_features = []
+            ds = dataSource.split("_")[0]
+            self.datadict[ds] = self.reduce_features( self.datadict[ds], self.outputs, dataSizes[ds], self.datadict[ds].columns )
+            self.datadict[ds] = pd.DataFrame(self.datadict[ds], columns = self.all_features)
+            
+        
+        self.all_features = []
+        
+    
+    def EF_level2(self):
+        files = datasets
+        final_path = "/projectnb/skiran/saurav/Fall-2022/src2/results/"
+        dataSources = [f.split("_")[0] + "_results" for f in files if not os.path.isfile(final_path + f)] 
+        dataSizes = dict()
+        for dataSource in dataSources:
+            path = PATH + "results/" + self.approach + "/" + self.model + "_predictions" + "/" + "level1" + "/" + dataSource + "/" + dataSource + "_aggregate.csv"
+            data = pd.read_csv(path)
+            data = data.sort_values(by=["validate RMSE"])
+            bestFeatures = data.iloc[0]["num features"]
+            match_number = re.compile('-?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *-?\ *[0-9]+)?')
+            bestFeatures = int(re.findall(match_number, bestFeatures)[0])
+            dataSizes[dataSource.split("_")[0]] = bestFeatures
+        
+        self.getReshapedData(dataSizes, dataSources)
+        # print("dataSizes = ", dataSizes, dataSources)
+
+        data_combination = self.dta.split("_")[0]
+        data_combination = data_combination.split("-")
+        
+        # print("data combination = ", data_combination)
+        final_data = None
+        for i,dataSource in enumerate(data_combination):
+            if i==0:
+                final_data = self.datadict[dataSource]
+                # print("dataSource = ", dataSource)
+                # print("data shape here = ", final_data.shape)
+                self.all_features += list(self.datadict[dataSource].columns)
+            else:
+                final_data = np.hstack((final_data, self.datadict[dataSource]))
+                # print("dataSoure = ", dataSource)
+                self.all_features += list(self.datadict[dataSource].columns)
+        
+        self.correlation_data = final_data
+        # print("data_combunation = ", self.dta)        
+        # print("final_data shape = ", final_data.shape, "\n")
+        
+        # print("data shape = ", self.correlation_data.shape)
+        # print("columns len = ", len(self.all_features))
+        # print("columns = ", self.all_features)
+        
+        # self.correlation_data = None
+        
+        
+        
+    
+    def init3(self):
+        if self.approach == "LF":
+            if self.level == "level1":
+                self.LF_level1()
+            elif self.level == "level2":
+                self.LF_level2()
+                
+        if self.approach == "EF":
+            if self.level == "level1":
+                self.LF_level1()
+            elif self.level == "level2":
+                self.EF_level2()
         
         
     
@@ -91,7 +201,7 @@ class getData:
         self.correlation_data = data.drop(["ground truth score", "Unnamed: 0"], axis = 1)
 
 
-    def reduce_features(self, data,outputs, num_features, columns):
+    def reduce_features(self, data,outputs, num_features, columns=None):
         
 
         data = np.hstack((data, outputs))
@@ -103,7 +213,7 @@ class getData:
         top_columns = np.argpartition(importances, -num_features)[-num_features:]
     
         data = data.iloc[:,top_columns]
-        self.all_features += list(data.columns)
+        self.all_features += list(columns[top_columns])
         
         outputs = outputs.ravel()
         data = data.values
@@ -112,27 +222,35 @@ class getData:
 
     def stan_optimal(self):
         print("using stan's data")
+        self.all_features = []
         df = pd.read_excel("/projectnb/skiran/saurav/Fall-2022/RS" + "/compiled_dataset_RSbivariate_without_controls_v7.xlsx", header = [0,1])
         outputs = df[("behavioral", "wab_aq_bd")].values
         outputs = outputs.reshape(len(outputs),1)
+        
+        outputs_temp = df[("behavioral", "difference_post_pre_bd")].values 
+        outputs_temp = outputs_temp.reshape(len(outputs_temp),1)
     
         data = {}
         data["AQ"] = df[('behavioral', "wab_aq_bd")].values[:, np.newaxis]
         data["DM"] = df["demographic_info"].values
-    
+        
+        
         featuresFAL = ["fa_avg_ccmaj", "fa_avg_ccmin", "fa_avg_lifof", "fa_avg_lilf", "fa_avg_lslf", "fa_avg_lunc", "fa_avg_larc"]
         featuresFAR = ["fa_avg_rifof", "fa_avg_rilf", "fa_avg_rslf", "fa_avg_runc", "fa_avg_rarc"]
 
         FA_L = df["average_FA_values"][featuresFAL].fillna(0).values
         FA_R = df["average_FA_values"][featuresFAR].fillna(df["average_FA_values"][featuresFAR].mean()).values
         data["FA"] = np.hstack((FA_L, FA_R))
-        data["FA"] = self.reduce_features(data["FA"], outputs, 2, pd.Index(featuresFAL + featuresFAR))
+        data["FA"] = self.reduce_features(data["FA"], outputs_temp, 2, pd.Index(featuresFAL + featuresFAR))
+        # self.all_features+=featuresFAL
+        # self.all_features += featuresFAR
 
         data["PS_G"] = df["percent_spared_in_gray_matter"].values
-        data["PS_G"] = self.reduce_features(data["PS_G"], outputs, 4, df["percent_spared_in_gray_matter"].columns)
+        data["PS_G"] = self.reduce_features(data["PS_G"], outputs_temp, 4, df["percent_spared_in_gray_matter"].columns)
+        # self.all_features += list(df["percent_spared_in_gray_matter"].columns)
 
         data["RS"] = df["restingstate_bivariate_correlations"].values
-        data["RS"] = self.reduce_features(data["RS"], outputs, 11, df["restingstate_bivariate_correlations"].columns)
+        data["RS"] = self.reduce_features(data["RS"], outputs_temp, 11, df["restingstate_bivariate_correlations"].columns)
         
         self.all_features += list(df["demographic_info"].columns)
         total_data = np.hstack((data["FA"], data["PS_G"]))
@@ -159,7 +277,6 @@ class getData:
         self.all_features = df.columns
         self.correlation_data = df.values
             
-        
 
     # def sortFiles(self) -> None:
     #     # READING THE DATA,
@@ -177,6 +294,7 @@ class getData:
     #     parts = list(rdf["participant"])
     #     self.participants= parts[:30] + parts[31:32] + parts[35:51] + parts[53:60] + parts[61:63] + parts[30:31] # participant IDs"
     #     self.wabaq = list(rdf["AQ"])  # Participant scores"
+    
     
     def sortFiles(self) -> None:
         mypath = "/projectnb/skiran/Isaac/data_for_saurav/"
@@ -202,10 +320,9 @@ class getData:
               }
         pdf_scores = pd.DataFrame(pdf)
         
-        
-        
         corr_data = []
         scores = []
+        
         for patient, score in pdf_scores.values:
             if patient != "BU29c07":
                 fname = mypath  + list(pdf_alias[pdf_alias["patientIDs"] == patient]["alias"])[0]
