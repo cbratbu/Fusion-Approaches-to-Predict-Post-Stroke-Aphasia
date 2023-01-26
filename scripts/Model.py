@@ -19,6 +19,8 @@ class Model:
         # self.order = settings["order"]
         self.same_split = settings["same split"]
         self.num_features = settings["top_k"]
+        self.approach = settings["approach"]
+        self.level = settings["level"]
         
         self.feature_reduction = settings["feature reduction"]
         self.FR_step = settings["features reduced per step"]
@@ -26,7 +28,7 @@ class Model:
         self.source = settings["data"]
         self.init(settings)
 
-    def reduce(self):
+    def saveImpCols(self):
         self.outputs = self.outputs.reshape(self.outputs.shape[0], 1)
         self.data = np.hstack((self.data, self.outputs))
         self.data = pd.DataFrame(self.data)
@@ -46,7 +48,8 @@ class Model:
         
         df = pd.DataFrame(df)
         self.bfi = df
-        
+
+    def reduce(self):
         self.data = self.data.iloc[:,self.top_columns]
         self.outputs = self.outputs.ravel()
         self.data = self.data.values
@@ -59,9 +62,17 @@ class Model:
         self.outputs = self.outputs.ravel()
         print("data shape = ", self.data.shape)
         print("outputs shape = ", self.outputs.shape)
+        print("all features shape here = ", len(self.all_features))
         # print("features", self.num_features)
+        self.saveImpCols()
         if self.num_features != -1:
             self.reduce()
+        else:
+            self.data = self.data.iloc[:,:-1]
+            self.data = self.data.values
+            self.outputs = self.outputs.ravel()
+            
+        # else:
             
             # print("reduction done")
             # print("data shape now = ", self.data.shape)
@@ -226,7 +237,7 @@ class Model:
         Returns:
             string: folder_name + file_name to save model parameter-wise outputs. 
         """
-        path = create_folder(self.source, fname)
+        path = create_folder(self.source, fname, self.m, self.level, self.approach)
         stratified = "" if self.stratified!=True else "stratified"
         fname = self.cv + "_" + self.m + "_" + self.metric + "_top" + str(self.num_features) + "frs_" + self.feature_reduction + "_"
         return path + "/" + fname[:-1]
