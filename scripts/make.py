@@ -7,18 +7,18 @@ import pathlib
 
 PATH =  "/projectnb/skiran/saurav/Fall-2022/src2/"
 
-datasets = ["RS", "FA", "PSW", "PSG", "DM", "LS", "stan_optimal"]
+datasets = ["RS", "FA", "PSW", "PSG", "DM", "stan_optimal"] # "LS",
 
 parameters = {
                 "-CV" : ["kTkV"], #["LOO", "LFiveO", "kTkV"],
-                "-model" : ["SVR", "RF"],#,"RF","AdaBoost"],#,"SVR"],#["RF", "SVR"], #["RF","SVR"], #["RF", "SVR"],
+                "-model" : ["SVR", "RF"],#["RF"],#,"RF","AdaBoost"],#,"SVR"],#["RF", "SVR"], #["RF","SVR"], #["RF", "SVR"],
                 "-metric" : ["all-metrics"],
                 "-f" :  None,#[5, 10,20,25,40,50,80,100,150,200,250,275,320,370,400,500,600,800,1000,1127], #[10],#,20,25,40,60,80,105], #[5, 10,20,25,40,50,80,100,150,200,250,275,320,370,400,500,600,800,1000,1127]
                 "-stratified":  [''],
                 "-data" : None, #["RS"],#, "stan_optimal", "LS"],#, "stan_optimal", "LS"],#["RS", "stan_optimal", "LS"]
                 "-features_R" : ["pearson"],#["pearson", "RFE"],
                 "-frstep" : [1],
-                "-approach" : ["EF"],#["LF"], #, "EF"]   # early fusion not implemented yet.
+                "-approach" : ["LF"],#["LF"], #, "EF"]   # early fusion not implemented yet.
                 "-level" : ["level1", "level2"]
                 #['True', ''], # [True, ''],
                 # "-same_split": ['True', ''], #[True, ''],
@@ -27,7 +27,7 @@ parameters = {
 
 features = {
             "stan_optimal" : [2,4,9,13,17],#,20],
-            "RS" : [10,20,25,40,50,80,100,150,200,250,275,320,370,400,500],#,600,800,1000],
+            "RS" : [10,20,25,40,50,80,100,150,200,250,275],#,320,370,400,500],#,600,800,1000],
             "LS" : [1],#[5,10,20,25,40,50,80,100],
             "MM" : [len(datasets)],
             
