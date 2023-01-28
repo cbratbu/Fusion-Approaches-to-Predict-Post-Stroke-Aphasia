@@ -227,7 +227,7 @@ class getData:
         outputs = df[("behavioral", "wab_aq_bd")].values
         outputs = outputs.reshape(len(outputs),1)
         
-        outputs_temp = df[("behavioral", "difference_post_pre_bd")].values 
+        outputs_temp = df[("behavioral", "wab_aq_bd")].values 
         outputs_temp = outputs_temp.reshape(len(outputs_temp),1)
     
         data = {}
