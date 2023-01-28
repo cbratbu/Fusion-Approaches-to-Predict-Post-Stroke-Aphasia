@@ -19,7 +19,7 @@ def getBestParams(dataSource, predictionModel, level, approach):
     model = data.iloc[0]["model"]
 
     if model == "RF":
-        model_params = data.iloc[:,21:23]
+        model_params = data.iloc[:,21:24]
     else:
         model_params = data.iloc[:,21:]
     
@@ -27,6 +27,8 @@ def getBestParams(dataSource, predictionModel, level, approach):
     
     # print("cols = ", model_params.columns)
     for parameter in model_params.columns:
+        print("parameters = ", model_params.columns)
+        print("parameter = ", parameter)
         word =  model_params[parameter].iloc[0]
         # print("parameter = ",parameter, " -- word = ", word)
         param = re.findall(r"\b[^\d\W]+\b", word)
@@ -67,6 +69,7 @@ def getBestModel(dataSource, predictionModel, level, approach):
 
 
 def getOutputFname(dataSources, predictionModel, approach, level):
+    print("approach = ", approach)
     if approach == "LF":
         os.makedirs(data_path + "lateFusionData/" + predictionModel + "/", exist_ok = True)
     elif approach == "EF":
@@ -78,11 +81,18 @@ def getOutputFname(dataSources, predictionModel, approach, level):
         for dataSource in dataSources:
             fname += dataSource.split("_")[0] + "_"
         fname += "ModalityOutputs.xlsx"
-        return data_path + "lateFusionData/"+ predictionModel + "/" + predictionModel + "_" +  fname
+        if approach == "LF":
+            return data_path + "lateFusionData/"+ predictionModel + "/" + predictionModel + "_" +  fname
+        elif approach == "EF":
+            return data_path + "earlyFusionData/"+ predictionModel + "/" + predictionModel + "_" +  fname
             
     else:
-        return data_path + "lateFusionData/"+ predictionModel + "/" + predictionModel + "_" + "allModalityOutputs.xlsx"
-            
+        
+        if approach == "LF":
+            return data_path + "lateFusionData/"+ predictionModel + "/" + predictionModel + "_" + "allModalityOutputs.xlsx"
+        elif approach == "EF":
+            return data_path + "earlyFusionData/"+ predictionModel + "/" + predictionModel + "_" + "allModalityOutputs.xlsx"
+
 
 def organizeOutputData(dataPaths, sources, predictionModel, approach, level):
     allModalityPreds = dict()
