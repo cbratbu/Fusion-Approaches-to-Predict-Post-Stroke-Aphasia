@@ -7,7 +7,7 @@ def createF(path):
     if not os.path.exists(path):
         os.makedirs(path,exist_ok=True)
 
-def create_folder(data, type = None):
+def create_folder(data, type = None, model = None):
     
     rspath = PATH
     rsopath = PATH
@@ -16,17 +16,17 @@ def create_folder(data, type = None):
     if data == "stan_optimal":
         # if not os.path.exists(PATH + "results/stan_results/model_performances"):
         #     os.makedirs(PATH + "results/stan_results/model_performances")
-        rspath += "results/stan_results/model_performances"
-        rsopath += "results/stan_results/outputs"
-        rsfpath += "results/stan_results/features"
+        rspath += "results/stan_results/model_performances" + "/" + model  if model!=None else ""
+        rsopath += "results/stan_results/outputs" + "/" + model if model!=None else ""
+        rsfpath += "results/stan_results/features" + "/" + model if model!=None else ""
         
     
     else:
         # if not os.path.exists(PATH + "results/" + data + "_results/model_performances"):
         #     os.makedirs(PATH + "results/" + data + "_results/model_performances")
-        rspath += "results/"+ data+ "_results/model_performances"
-        rsopath += "results/" + data + "_results/outputs"
-        rsfpath += "results/" + data + "_results/features"
+        rspath += "results/"+ data+ "_results/model_performances" + "/" + model  if model!=None else ""
+        rsopath += "results/" + data + "_results/outputs" + "/" + model  if model!=None else ""
+        rsfpath += "results/" + data + "_results/features" + "/" + model  if model!=None else ""
     
     # if type == "features":
     #     return rsfpath
