@@ -19,10 +19,10 @@ class getData:
             self.stan_optimal()
         elif dta == "LS": # Done
             print("loading WM GM lesion remaining data")
-            self.init2()
-                        
+            self.init2()             
         elif dta == "MM": # Done
             self.multi_modal()
+            
         else:
             self.dta = dta
             self.init3()
