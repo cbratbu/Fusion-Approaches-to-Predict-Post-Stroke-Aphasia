@@ -2,6 +2,7 @@ import pandas as pd
 import re
 import os 
 import itertools
+import pathlib
 # from params import *
 
 final_path = "/Users/saurav/Desktop/Margrit/Fall-22/WAB-prediction/results/"
@@ -17,9 +18,9 @@ def getBestParams(dataSource):
     model = data.iloc[0]["model"]
 
     if model == "RF":
-        model_params = data.iloc[:,21:23]
+        model_params = data.iloc[:,20:23]
     else:
-        model_params = data.iloc[:,21:]
+        model_params = data.iloc[:,20:]
     
     fname = ""
     
@@ -73,14 +74,16 @@ def organizeOutputData(dataPaths, sources, opFname):
         allModalityPreds[sources[i]] = predictions
     allModalityPreds["ground truth score"] = ground_truths
     allModalityPreds = pd.DataFrame(allModalityPreds)
+    pathlib.Path(data_path + "opCombinations/" ).mkdir(parents=True, exist_ok=True)
     allModalityPreds.to_excel(data_path + "opCombinations/" + opFname)
         
 def getfileName(dataSources):
     str_ = ""
-    for i,source in enumerate(dataSources):
+    for i,source in enumerate(sorted(dataSources)):
         str_ += source[:-8]        
         str_ += "-" if i != len(dataSources)-1 else "-ModCombinations.xlsx"
         print("str_ = ", str_)        
+    return str_
 
 def writeCombinationOutputs(modalityCombinations):
     raise NotImplementedError
@@ -89,10 +92,7 @@ if __name__ == "__main__":
 
     files = os.listdir(final_path)
     dataSources = [f for f in files if not os.path.isfile(final_path + f)]   
-    dataSourceCombinations = list(itertools.combinations(dataSources, 1))
-    
-    # print("combinations = ", dataSourceCombinations)
-    
+    dataSourceCombinations = list(itertools.combinations(dataSources, 3))
     
     for dataSources in dataSourceCombinations:
         dataPaths = []
