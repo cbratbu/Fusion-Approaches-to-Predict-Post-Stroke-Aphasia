@@ -74,8 +74,6 @@ def get_different_combinations():
         
 def write_scripts(args, level, f2):
     
-    
-            
 
         if level == "level_1":
             parameters["-data"] = datasets 
