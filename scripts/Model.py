@@ -224,7 +224,7 @@ class Model:
         Returns:
             string: folder_name + file_name to save model parameter-wise outputs. 
         """
-        path = create_folder(self.source, fname)
+        path = create_folder(self.source, fname, self.m)
         stratified = "" if self.stratified!=True else "stratified"
         fname = self.cv + "_" + self.m + "_" + self.metric + "_top" + str(self.num_features) + "frs_" + self.feature_reduction + "_"
         return path + "/" + fname[:-1]
