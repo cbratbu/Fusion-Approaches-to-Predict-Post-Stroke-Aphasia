@@ -16,19 +16,24 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error
 
 from sklearn.svm import SVR
 import itertools
+from scripts.make import *
 from tqdm import tqdm
-PATH = "/projectnb/skiran/saurav/Fall-2022/src2/"
+PATH = "/Users/saurav/Desktop/Margrit/Fall-22/WAB-prediction/"
 
 # files = os.listdir("results/")
 # files = [f for f in listdir(PATH + "results/") if isfile(join(PATH + "results/", f))]
 
 results_folder = PATH + "results/model_performances"
+
+# create seperate final file for each of the model used to predict.
 output_file =  PATH + "results/final.csv"
 
 
 num_ranks = 3
 
-def writeResults():
+prediction_models = []
+
+def writeResults(predictive_model):
     with open(output_file,"w", newline='') as csvfile:
         writer = csv.writer(csvfile, delimiter=',',
                                 quotechar='|', quoting=csv.QUOTE_MINIMAL)
@@ -80,20 +85,26 @@ def writeResults():
     
 
 def writeFiles():
-    
     files = os.listdir(PATH + "results")
     dataFolders = [f for f in files if not os.path.isfile(PATH + "results/" + f)]    
+    print("folders = ", dataFolders)
     totalData = pd.read_csv(output_file)     
     
     for source in dataFolders:
         data = totalData[totalData["data source"] == source]
         data.to_csv(PATH+"results/" + source + "/" + source + "_aggregate.csv")
-    
+
+def modelWise_update():
+    for predictiveModel in prediction_models:
+        writeResults(predictiveModel)
+        writeFiles(predictiveModel)    
         
     
 if __name__ == "__main__":
-    writeResults()
-    writeFiles()
+    
+    prediction_models = parameters["-model"]
+    # writeResults()
+    # writeFiles()
     
     
     
