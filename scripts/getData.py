@@ -13,14 +13,21 @@ class getData:
         self.approach = settings["approach"]
         self.level = settings["level"]
         self.all_features = []
+        self.experiment = settings["experiment"]
+        self.feature_base = settings["feature base"]
         
         dta = settings["data"]
+        
+        
         if dta == "RS": # Done
             print("loading resting state data")
             self.init()
         elif dta == "stan_optimal": 
             print("loading stan's data")
             self.stan_optimal()
+            
+        elif dta == "combined_features":
+            self.combined_data()
         # elif dta == "LS": # Done
         #     print("loading WM GM lesion remaining data")
             # self.init2()
@@ -84,6 +91,27 @@ class getData:
         
     
     
+    def combined_data(self):
+        self.read_data()
+        corr_data = []
+        self.all_features = []
+        for i,dataSource in enumerate(list(self.datadict)):
+            # print("dataSource now = ", dataSource)
+            # print("data shape = ", self.datadict[dataSource].shape)
+            if dataSource in datasets:
+                # print("dataSource added = ", dataSource)
+                if len(corr_data) == 0:
+                    corr_data = self.datadict[dataSource].values
+                    self.all_features += list(self.datadict[dataSource].columns)
+                else:
+                    corr_data = np.hstack((corr_data, self.datadict[dataSource].values))
+                    self.all_features += list(self.datadict[dataSource].columns)
+        
+        print("----")
+        self.correlation_data = corr_data
+        
+    
+    
     def LF_level1(self):
         self.read_data()
         features = self.dta.split("-")
@@ -103,14 +131,34 @@ class getData:
         print("data = ", str(self.dta))
         data_combination = self.dta.split("_")[0]
         data_combination = data_combination.split("-")
-        dataPath = "/projectnb/skiran/saurav/Fall-2022/src2/data/" + "lateFusionData/"
+        dataPath = "/projectnb/skiran/saurav/Fall-2022/src2/data/" + self.experiment + "/" + "lateFusionData/"
         fname = None
+        
+        # if self.experiment == "EXP-without-stans-features":
+        #     temp = datasets
+        #     datasets = temp.remove("stan_optimal")
+
+        if "noStan" in self.experiment or "without-stans-features" in self.experiment:
+            datasets_copy = datasets
+            datasets_copy.remove("stan_optimal")
+
+        
         if len(data_combination) == len(datasets):
             data_combination = self.model
             fname = data_combination + "_allModalityOutputs.xlsx"
+
+        # if self.experiment == "EXP-without-stans-features" and len(data_combination) == len(datasets)-1:
+            
+        #     data_combination = self.model
+        #     fname = data_combination + "_allModalityOutputs.xlsx"
         else:
+
             data_combination = "_".join(data_combination)
             fname =  self.model + "_" + data_combination + "_ModalityOutputs.xlsx"
+        
+        
+            
+        
         dataPath += self.model + "/"  + fname
         
         self.correlation_data = pd.read_excel(dataPath)
@@ -120,26 +168,37 @@ class getData:
         self.correlation_data = self.correlation_data.values
         
 
-    def getReshapedData(self, dataSizes, dataSources):
+    def getReshapedData(self, dataSources, dataSizes=None):
         self.read_data()
         
-        for dataSource in dataSources:
-            self.all_features = []
-            ds = dataSource.split("_")[0]
-            self.datadict[ds] = self.reduce_features( self.datadict[ds], self.outputs, dataSizes[ds], self.datadict[ds].columns )
-            self.datadict[ds] = pd.DataFrame(self.datadict[ds], columns = self.all_features)
+        if self.feature_base == "entire-data":        
+            for dataSource in dataSources:
+                self.all_features = []
+                ds = dataSource.split("_")[0]
+                self.datadict[ds] = self.reduce_features( self.datadict[ds], self.outputs, dataSizes[ds], self.datadict[ds].columns )
+                self.datadict[ds] = pd.DataFrame(self.datadict[ds], columns = self.all_features)
+
+        elif self.feature_base == "train-data":
+            for dataSource in dataSources:
+                self.all_features = []
+                ds = dataSource.split("_")[0]
+                # print("dataSource = ", ds)
+                self.datadict[ds] = self.datadict[ds][self.dataFeatures[ds]]
+                # print("shape = ", self.datadict[ds].shape, "  --- len = ", len(self.dataFeatures[ds]))
             
-        
         self.all_features = []
         
     
-    def EF_level2(self):
+    def EF_level2_entire_data(self):
         files = datasets
+        if self.experiment == "EXP-without-stans-features":
+            if "stan_optimal" in datasets:
+                files.remove("stan_optimal")
         final_path = "/projectnb/skiran/saurav/Fall-2022/src2/results/"
         dataSources = [f.split("_")[0] + "_results" for f in files if not os.path.isfile(final_path + f)] 
         dataSizes = dict()
         for dataSource in dataSources:
-            path = PATH + "results/" + self.approach + "/" + self.model + "_predictions" + "/" + "level1" + "/" + dataSource + "/" + dataSource + "_aggregate.csv"
+            path = PATH + "results/" + self.experiment + "/" + self.approach + "/" + self.model + "_predictions" + "/" + "level1" + "/" + dataSource + "/" + dataSource + "_aggregate.csv"
             data = pd.read_csv(path)
             data = data.sort_values(by=["validate RMSE"])
             bestFeatures = data.iloc[0]["num features"]
@@ -147,7 +206,7 @@ class getData:
             bestFeatures = int(re.findall(match_number, bestFeatures)[0])
             dataSizes[dataSource.split("_")[0]] = bestFeatures
         
-        self.getReshapedData(dataSizes, dataSources)
+        self.getReshapedData(dataSources,dataSizes)
         # print("dataSizes = ", dataSizes, dataSources)
 
         data_combination = self.dta.split("_")[0]
@@ -167,16 +226,56 @@ class getData:
                 self.all_features += list(self.datadict[dataSource].columns)
         
         self.correlation_data = final_data
-        # print("data_combunation = ", self.dta)        
-        # print("final_data shape = ", final_data.shape, "\n")
+
+
+
+
+    def EF_level2_train_data(self):
+        files = datasets
+
+        if "without-stans-features" in self.experiment or "noStan" in self.experiment:
+            if "stan_optimal" in datasets:
+                files.remove("stan_optimal")
+        final_path = "/projectnb/skiran/saurav/Fall-2022/src2/results/"
+        dataSources = [f.split("_")[0] + "_results" for f in files if not os.path.isfile(final_path + f)] 
+        self.dataFeatures = dict()
         
-        # print("data shape = ", self.correlation_data.shape)
-        # print("columns len = ", len(self.all_features))
-        # print("columns = ", self.all_features)
         
-        # self.correlation_data = None
+        for dataSource in dataSources:
+            path = PATH + "results/" + self.experiment + "/" + self.approach + "/" + self.model + "_predictions" + "/" + "level1" + "/" + dataSource + "/" + "bestFeatureSet.csv"
+            data = pd.read_csv(path)
+            self.dataFeatures[dataSource.split("_")[0]] = list(data["features"])
         
         
+        self.getReshapedData(dataSources)
+        # print("dataSizes = ", dataSizes, dataSources)
+
+        data_combination = self.dta.split("_")[0]
+        data_combination = data_combination.split("-")
+        
+        # print("data combination = ", data_combination)
+        final_data = None
+        for i,dataSource in enumerate(data_combination):
+            if i==0:
+                final_data = self.datadict[dataSource]
+                # print("dataSource = ", dataSource)
+                # print("data shape here = ", final_data.shape)
+                self.all_features += list(self.datadict[dataSource].columns)
+            else:
+                final_data = np.hstack((final_data, self.datadict[dataSource]))
+                # print("dataSoure = ", dataSource)
+                self.all_features += list(self.datadict[dataSource].columns)
+        
+        self.correlation_data = final_data
+            
+    
+    def EF_level2(self):
+        if self.feature_base == "entire-data":
+            self.EF_level2_entire_data()
+            
+        elif self.feature_base == "train-data":
+            self.EF_level2_train_data()
+            
         
     
     def init3(self):
@@ -227,7 +326,7 @@ class getData:
         outputs = df[("behavioral", "wab_aq_bd")].values
         outputs = outputs.reshape(len(outputs),1)
         
-        outputs_temp = df[("behavioral", "wab_aq_bd")].values 
+        outputs_temp = df[("behavioral", "wab_aq_bd")].values  # based on this variable, you filter out the features in stan's feature way.
         outputs_temp = outputs_temp.reshape(len(outputs_temp),1)
     
         data = {}
