@@ -1,8 +1,8 @@
-from libraries import *
 from getData import *
 from models import *
 from params import *
 from utils import *
+import sys
 
 class Model:
     def __init__(self, settings):
@@ -21,6 +21,9 @@ class Model:
         self.num_features = settings["top_k"]
         self.approach = settings["approach"]
         self.level = settings["level"]
+        self.experiment = settings["experiment"]
+        self.feature_base = settings["feature base"]
+
         
         self.feature_reduction = settings["feature reduction"]
         self.FR_step = settings["features reduced per step"]
@@ -34,6 +37,7 @@ class Model:
         self.data = pd.DataFrame(self.data)
 
         corrs = self.data.corr().abs()
+        corrs = corrs.fillna(0)
         importances = corrs.values[-1][:-1]
 
         self.top_columns = np.argpartition(importances, -self.num_features)[-self.num_features:]
@@ -60,32 +64,37 @@ class Model:
         self.all_features, self.data, self.outputs = GET.data()
         self.all_features = pd.Index(self.all_features)
         self.outputs = self.outputs.ravel()
+
         print("data shape = ", self.data.shape)
         print("outputs shape = ", self.outputs.shape)
         print("all features shape here = ", len(self.all_features))
-        # print("features", self.num_features)
-        self.saveImpCols()
-        if self.num_features != -1:
-            self.reduce()
-        else:
-            self.data = self.data.iloc[:,:-1]
-            self.data = self.data.values
-            self.outputs = self.outputs.ravel()
+        print("features", self.num_features)
+        
+        if self.feature_base == "entire-data" or (self.num_features == -1):
+            self.saveImpCols()
             
-        # else:
-            
-            # print("reduction done")
-            # print("data shape now = ", self.data.shape)
-        if self.stratified == True:
-            self.data = pd.DataFrame(self.data)
-            self.data["outputs"] = self.outputs 
-            # if self.order =="ascending":
-            self.data = self.data.sort_values(by = "outputs", ascending = True)
-            # elif self.order == "descending":
-                # self.data = self.data.sort_values(by = "outputs", ascending = False)
-            self.outputs = self.data["outputs"].values
-            self.data = self.data.drop(["outputs"], axis = 1)
-            self.data = self.data.values
+            if self.num_features != -1:
+                if self.data.shape[1] != 1:
+                    self.reduce()
+            else:
+                self.data = self.data.iloc[:,:-1]
+                self.data = self.data.values
+                self.outputs = self.outputs.ravel()
+                
+            # else:
+                
+                # print("reduction done")
+                # print("data shape now = ", self.data.shape)
+            if self.stratified == True:
+                self.data = pd.DataFrame(self.data)
+                self.data["outputs"] = self.outputs 
+                # if self.order =="ascending":
+                self.data = self.data.sort_values(by = "outputs", ascending = True)
+                # elif self.order == "descending":
+                    # self.data = self.data.sort_values(by = "outputs", ascending = False)
+                self.outputs = self.data["outputs"].values
+                self.data = self.data.drop(["outputs"], axis = 1)
+                self.data = self.data.values
             
         self.forward()
 
@@ -186,6 +195,7 @@ class Model:
             data = pd.DataFrame(data)
     
             corrs = data.corr().abs()
+            corrs = corrs.fillna(0)
             importances = corrs.values[-1][:-1]
     
             top_columns = np.argpartition(importances, -self.num_features)[-self.num_features:]
@@ -237,7 +247,10 @@ class Model:
         Returns:
             string: folder_name + file_name to save model parameter-wise outputs. 
         """
-        path = create_folder(self.source, fname, self.m, self.level, self.approach)
+        
+        # print("experiment = ", self.experiment)
+        
+        path = create_folder(self.source, fname, self.m, self.level, self.approach, self.experiment)
         stratified = "" if self.stratified!=True else "stratified"
         fname = self.cv + "_" + self.m + "_" + self.metric + "_top" + str(self.num_features) + "frs_" + self.feature_reduction + "_"
         return path + "/" + fname[:-1]
@@ -254,7 +267,8 @@ class Model:
             os.makedirs(folder,exist_ok=True)
         file = self.get_KFfname()
 
-        self.bfi.to_csv( folder + "/" + "important_features.csv")
+        if self.feature_base == "entire-data":
+            self.bfi.to_csv( folder + "/" + "important_features.csv")
         self.writerfile = open( folder + "/" + file , 'w', newline='')
         self.feature_writer = csv.writer(self.writerfile, delimiter=' ',  quotechar='|', quoting=csv.QUOTE_MINIMAL)
         
@@ -333,12 +347,15 @@ class Model:
             
             X_train, X_validate = data[train_index], data[validate_index]
             y_train, y_validate = outputs[train_index], outputs[validate_index]
-            
-            # if self.num_features!=-1: #(self.num_features!=-1 and self.cv!="kTkV"):
-
-            #     self.top_columns = self.important_columns(X_train,y_train)
-            #     X_train = self.reduce_data(X_train)
-            #     X_validate = self.reduce_data(X_validate)
+    
+            if self.feature_base == "train-data":        
+                if self.num_features!=-1: #(self.num_features!=-1 and self.cv!="kTkV"):
+                    self.top_columns = self.important_columns(X_train,y_train)
+                    print("train data shape before = ", X_train.shape)
+                    X_train = self.reduce_data(X_train)
+                    print("reduced train data shape = ", X_train.shape)
+                    X_validate = self.reduce_data(X_validate)
+                    # print("reduced validation data shape = ", X_validate.shape)
             
             self.save_features()
 
@@ -459,10 +476,15 @@ class Model:
 
             train_performance, validate_performance, train_performance_MAE, validate_performance_MAE, model = self.validate(X_train, y_train)
 
-            # X_train = self.reduce_data(X_train)
-            # X_test = self.reduce_data(X_test)
+            if self.feature_base == "train-data":
+                if self.num_features != -1:
+                    print("X_test shape before = ", X_test.shape)
+                    X_train = self.reduce_data(X_train)
+                    X_test = self.reduce_data(X_test)
+                    print("X_test reduced shape = ", X_test.shape)
 
             models.append(model)
+            
 
             test_predictions = model.predict(X_test)
             
@@ -480,7 +502,7 @@ class Model:
 
             test_performances.append(test_performance)
             test_performances_MAE.append(test_performance_MAE)
-
+        # sys.exit(1)
         self.save_file(cumulative_test_predictions, cumulative_test_truths)
         model = models[np.argmin(test_performances)]
 
@@ -517,7 +539,7 @@ class Model:
 
         param_list = self.get_params_()
 
-        for self.curr_param in tqdm(param_list, "params"):
+        for self.curr_param in tqdm(param_list, "params", postfix = self.source + "  --  " + str(self.num_features)):
             self.features_init()
             self.model = self.get_model(self.m, self.curr_param)
 
