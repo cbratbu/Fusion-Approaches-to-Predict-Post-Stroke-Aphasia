@@ -5,7 +5,7 @@ def createF(path):
     if not os.path.exists( path):
         os.makedirs(path,exist_ok=True)
 
-def create_folder(data, type = None, model = None, level=None, approach=None):
+def create_folder(data, type = None, model = None, level=None, approach=None, experiment=None):
     
     rspath = PATH 
     rsopath = PATH
@@ -14,17 +14,18 @@ def create_folder(data, type = None, model = None, level=None, approach=None):
     model_path = model if model != None else ""
     level_path = level if level!=None else ""
     approach_path = approach if approach !=None else ""
+    experiment = experiment if experiment != None else ""
     
     if data == "stan_optimal":
-        rspath += "results/" + approach_path + "/" + model_path + "_predictions" + "/"  + level_path + "/" + "stan_results/"   + "/model_performances" 
-        rsopath += "results/" + approach_path + "/" + model_path + "_predictions" + "/"  + level_path + "/" + "stan_results/"  + "/outputs" 
-        rsfpath += "results/" + approach_path + "/" + model_path + "_predictions" + "/"  + level_path + "/" + "stan_results/"  + "/features" 
+        rspath += "results/" + experiment + "/" + approach_path + "/" + model_path + "_predictions" + "/"  + level_path + "/" + "stan_results/"   + "/model_performances" 
+        rsopath += "results/" + experiment + "/" + approach_path + "/" + model_path + "_predictions" + "/"  + level_path + "/" + "stan_results/"  + "/outputs" 
+        rsfpath += "results/" + experiment + "/" + approach_path + "/" + model_path + "_predictions" + "/"  + level_path + "/" + "stan_results/"  + "/features" 
         
     
     else:
-        rspath += "results/"+ approach_path + "/" + model_path  + "_predictions" + "/" + level_path + "/" + data + "_results/"  + "/model_performances" 
-        rsopath += "results/" + approach_path + "/" + model_path  + "_predictions" + "/" + level_path + "/" + data + "_results/" + "/outputs" 
-        rsfpath += "results/" + approach_path + "/" + model_path  + "_predictions" + "/" + level_path + "/" + data + "_results/" + "/features" 
+        rspath += "results/" + experiment + "/" + approach_path + "/" + model_path  + "_predictions" + "/" + level_path + "/" + data + "_results/"  + "/model_performances" 
+        rsopath += "results/" + experiment + "/" + approach_path + "/" + model_path  + "_predictions" + "/" + level_path + "/" + data + "_results/" + "/outputs" 
+        rsfpath += "results/" + experiment + "/" + approach_path + "/" + model_path  + "_predictions" + "/" + level_path + "/" + data + "_results/" + "/features" 
     
     
     if type == "performance":
