@@ -8,8 +8,11 @@ import argparse
 final_path = "/projectnb/skiran/saurav/Fall-2022/src2/results/"
 data_path = "/projectnb/skiran/saurav/Fall-2022/src2/data/"
 
-def getBestParams(dataSource, predictionModel, level, approach):
-    output_file = final_path + approach + "/" + predictionModel + "_predictions" + "/" + level  + "/" +  dataSource + "/"  + dataSource + "_aggregate.csv"
+# files = datasets
+
+
+def getBestParams(dataSource, predictionModel, level, approach, experiment):
+    output_file = final_path + experiment + "/" + approach + "/" + predictionModel + "_predictions" + "/" + level  + "/" +  dataSource + "/"  + dataSource + "_aggregate.csv"
     # print("output file = ", output_file)
     data = pd.read_csv(output_file,  delimiter=",")
     #
@@ -54,9 +57,11 @@ def getBestParams(dataSource, predictionModel, level, approach):
     fname = fname[:-1] + ".csv"
     return fname
 
-def getBestModel(dataSource, predictionModel, level, approach):
+
+
+def getBestModel(dataSource, predictionModel, level, approach, experiment):
     best_model = ""
-    data = pd.read_csv(final_path + approach + "/" + predictionModel + "_predictions" +"/" + level + "/" + dataSource + "/" + dataSource+"_aggregate.csv")
+    data = pd.read_csv(final_path + experiment + "/" + approach + "/" + predictionModel + "_predictions" +"/" + level + "/" + dataSource + "/" + dataSource+"_aggregate.csv")
     data = data.sort_values(by = "validate RMSE")
     data = data[data["model"] == predictionModel]
     model_params = data.iloc[0,1:6]
@@ -68,12 +73,13 @@ def getBestModel(dataSource, predictionModel, level, approach):
     return best_model
 
 
-def getOutputFname(dataSources, predictionModel, approach, level):
+
+def getOutputFname(dataSources, predictionModel, approach, level, experiment):
     print("approach = ", approach)
     if approach == "LF":
-        os.makedirs(data_path + "lateFusionData/" + predictionModel + "/", exist_ok = True)
+        os.makedirs(data_path + experiment + "/" + "lateFusionData/" + predictionModel + "/", exist_ok = True)
     elif approach == "EF":
-        os.makedirs(data_path + "earlyFusionData/" + predictionModel + "/", exist_ok = True)
+        os.makedirs(data_path + experiment + "/" + "earlyFusionData/" + predictionModel + "/", exist_ok = True)
         
     if len(dataSources) < len(datasets):
         dataSources = sorted(dataSources)
@@ -82,21 +88,26 @@ def getOutputFname(dataSources, predictionModel, approach, level):
             fname += dataSource.split("_")[0] + "_"
         fname += "ModalityOutputs.xlsx"
         if approach == "LF":
-            return data_path + "lateFusionData/"+ predictionModel + "/" + predictionModel + "_" +  fname
+            return data_path + experiment + "/" + "lateFusionData/"+ predictionModel + "/" + predictionModel + "_" +  fname
         elif approach == "EF":
-            return data_path + "earlyFusionData/"+ predictionModel + "/" + predictionModel + "_" +  fname
+            return data_path + experiment + "/" + "earlyFusionData/"+ predictionModel + "/" + predictionModel + "_" +  fname
             
     else:
         
         if approach == "LF":
-            return data_path + "lateFusionData/"+ predictionModel + "/" + predictionModel + "_" + "allModalityOutputs.xlsx"
+            return data_path + experiment + "/" + "lateFusionData/"+ predictionModel + "/" + predictionModel + "_" + "allModalityOutputs.xlsx"
         elif approach == "EF":
-            return data_path + "earlyFusionData/"+ predictionModel + "/" + predictionModel + "_" + "allModalityOutputs.xlsx"
+            return data_path + experiment + "/" + "earlyFusionData/"+ predictionModel + "/" + predictionModel + "_" + "allModalityOutputs.xlsx"
 
 
-def organizeOutputData(dataPaths, sources, predictionModel, approach, level):
+
+
+def organizeOutputData(dataPaths, sources, predictionModel, approach, level, experiment):
     allModalityPreds = dict()
     # print("size of dataPaths = ", len(dataPaths))
+    print("sources = ", sources)
+    print("len(dataPaths) = ", len(dataPaths))
+    print(dataPaths)
     for i,bestM in enumerate(dataPaths):
         data = pd.read_csv(bestM)
         newdata = data.sort_values(by = ["ground truth score"], ascending=True)
@@ -104,47 +115,78 @@ def organizeOutputData(dataPaths, sources, predictionModel, approach, level):
         allModalityPreds[sources[i]] = predictions
     allModalityPreds["ground truth score"] = ground_truths
     allModalityPreds = pd.DataFrame(allModalityPreds)
-    outputFname = getOutputFname(sources, predictionModel, approach, level)
+    outputFname = getOutputFname(sources, predictionModel, approach, level, experiment)
     allModalityPreds.to_excel( outputFname)  # update this path based on what kind of fusion approach you are trying
                                                                                                                 # also update if any data combinations you are going to try here.
         
-        
-def saveBestFiles(predictionModel, dataSources, level):
-    datapaths = []
-    approaches = parameters["-approach"]
-    for approach in approaches:
-        for source in dataSources:
-            bestParams = getBestParams(source, predictionModel, level, approach) # gets you the best training parameters for a dataSource with certain prediction model
-            bestModel = getBestModel(source, predictionModel, level, approach) # need to update what this does. 
-            datapaths.append(final_path + approach + "/" + predictionModel + "_predictions/" + level + "/" + source + "/"  + "outputs/" + bestModel + "/" + bestParams)
-    organizeOutputData(datapaths, dataSources, predictionModel, approach, level)
+    
     
         
-def saveBestOutputs_dataSourceCombinations(dataSources, predictionModels, level):  # saves outputs combinations for different data source combinations
+def saveBestFiles(predictionModel, dataSources, level, experiment):
+    approaches = parameters["-approach"]
+    # experiments = parameters["-experiments"]
+    
+    # for experiment in experiments:
+    for approach in approaches:
+        datapaths = []
+        for source in dataSources:
+            bestParams = getBestParams(source, predictionModel, level, approach, experiment) # gets you the best training parameters for a dataSource with certain prediction model
+            bestModel = getBestModel(source, predictionModel, level, approach, experiment) # need to update what this does. 
+            datapaths.append(final_path + experiment + "/" + approach + "/" + predictionModel + "_predictions/" + level + "/" + source + "/"  + "outputs/" + bestModel + "/" + bestParams)
+            
+    print(datapaths)
+    organizeOutputData(datapaths, dataSources, predictionModel, approach, level, experiment)
+    
+    
+    
+        
+def saveBestOutputs_dataSourceCombinations(dataSources, predictionModels, level, experiment):  # saves outputs combinations for different data source combinations
     dataSourcesCombinations = []
     for i in range(1,len(dataSources)+1):
         dataSourcesCombinations += list(map(list,list(itertools.combinations(dataSources, i))))
         
     for dataSources in dataSourcesCombinations:
         for predictionModel in predictionModels:
-            saveBestFiles(predictionModel, dataSources, level)
+            saveBestFiles(predictionModel, dataSources, level, experiment)
+
+
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="enter combineOutputs Arguments")
     parser.add_argument("-level", type = str, help = "levels : [ level1, level2 ] ", default = "level1")
+    parser.add_argument("-experiment", type = str, help = "experiment to run : [ EXP-with-stans-features ] ", default = "EXP-with-stans-features")
     # parser.add_argument("-o", type = str, help = "Enter output file name")
     args = parser.parse_args()
     level = args.level
+    experiment = args.experiment
     approaches = parameters["-approach"]
+    # experiments = parameters["-experiment"]
 
+    
     files = datasets
+    # print("is anything happening?")
+    
+    if "without-stans-features" in experiment or "noStan" in experiment: # experiment == "EXP-without-stans-features" or experiment == "EXP-without-stans-features-noFeatureReduction":
+        files.remove("stan_optimal")
+        
+    
+    print("path = ", final_path )
     dataSources = [f.split("_")[0] + "_results" for f in files if not os.path.isfile(final_path + f)] 
     predictionModels = parameters["-model"]
+    if "all-data-stacked" in experiment:
+        files = ["combined_features"]
+        dataSources = ["combined_features_results"]
 
+
+    if "SVR" in experiment:
+        predictionModels = ["SVR"]
+    elif "RF" in experiment:
+        predictionModels = ["RF"]
     # for predictionModel in predictionModels:
     #     saveBestFiles(predictionModel, dataSources)
         
-    saveBestOutputs_dataSourceCombinations(dataSources, predictionModels, level)
+    saveBestOutputs_dataSourceCombinations(dataSources, predictionModels, level, experiment)
     
     
     
