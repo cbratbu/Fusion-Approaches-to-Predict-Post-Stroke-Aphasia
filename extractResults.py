@@ -11,8 +11,8 @@ from sklearn.metrics import mean_squared_error, r2_score
 
 final_path = "/projectnb/skiran/saurav/Fall-2022/src2/results/"
 
-def getBestParams(dataSource, predictionModel, level, approach):
-    output_file = final_path + approach + "/" + predictionModel + "_predictions" + "/" + level  + "/" +  dataSource + "/"  + dataSource + "_aggregate.csv"
+def getBestParams(dataSource, predictionModel, level, approach, experiment):
+    output_file = final_path + experiment + "/" + approach + "/" + predictionModel + "_predictions" + "/" + level  + "/" +  dataSource + "/"  + dataSource + "_aggregate.csv"
     # print("output file = ", output_file)
     data = pd.read_csv(output_file,  delimiter=",")
     #
@@ -58,9 +58,9 @@ def getBestParams(dataSource, predictionModel, level, approach):
     return fname
 
 
-def getBestModel(dataSource, predictionModel, level, approach):
+def getBestModel(dataSource, predictionModel, level, approach, experiment):
     best_model = ""
-    data = pd.read_csv(final_path + approach + "/" + predictionModel + "_predictions" +"/" + level + "/" + dataSource + "/" + dataSource+"_aggregate.csv")
+    data = pd.read_csv(final_path + experiment + "/" + approach + "/" + predictionModel + "_predictions" +"/" + level + "/" + dataSource + "/" + dataSource+"_aggregate.csv")
     data = data.sort_values(by = "validate RMSE")
     data = data[data["model"] == predictionModel]
     model_params = data.iloc[0,1:6]
@@ -73,19 +73,19 @@ def getBestModel(dataSource, predictionModel, level, approach):
     return best_model, bestRMSE
 
 
-def getSources(approach, model, level):
-    dataSourcePath = final_path + approach + "/" + model + "_predictions" + "/" + level + "/"
+def getSources(approach, model, level, experiment):
+    dataSourcePath = final_path + experiment + "/" + approach + "/" + model + "_predictions" + "/" + level + "/"
     dataSourceCombinations = os.listdir(dataSourcePath)
     if "LS_results" in dataSourceCombinations:
         dataSourceCombinations.remove("LS_results") 
     return dataSourceCombinations
 
 
-def writeFile(approach, model, level, dataSource, writer):
-    bestParam = getBestParams(dataSource, model, level, approach)
-    bestModel, rmse_val = getBestModel(dataSource, model, level, approach)
+def writeFile(approach, model, level, dataSource, writer, experiment):
+    bestParam = getBestParams(dataSource, model, level, approach, experiment)
+    bestModel, rmse_val = getBestModel(dataSource, model, level, approach, experiment)
     
-    bestParamFilePath = final_path + approach + "/" + model + "_predictions/" + level + "/" + dataSource + "/"  + "outputs/" + bestModel + "/" + bestParam
+    bestParamFilePath = final_path + experiment + "/" + approach + "/" + model + "_predictions/" + level + "/" + dataSource + "/"  + "outputs/" + bestModel + "/" + bestParam
     data = pd.read_csv(bestParamFilePath)
     
     corr = data.corr().values[1,2]
@@ -96,16 +96,16 @@ def writeFile(approach, model, level, dataSource, writer):
     writer.writerow([" ".join(dataSource.split("-")), corr, rmse_preds, rmse_val])
 
 
-def saveDoc(approach, levels, model):
-    output_file = final_path + approach + "/" + model + "_predictions" + "/" + "modalityResults.csv"
+def saveDoc(approach, levels, model, experiment):
+    output_file = final_path + experiment + "/" + approach + "/" + model + "_predictions" + "/" + "modalityResults.csv"
     with open(output_file,"w", newline='') as csvfile:
         writer = csv.writer(csvfile, delimiter=',',
                                     quotechar='|', quoting=csv.QUOTE_MINIMAL)
         writer.writerow(["Data Combination", "pearson's r pred", "RMSE pred", "RMSE val"])
         for level in levels:
-            dataSources = getSources(approach, model, level) #gets the dataSources in each level
+            dataSources = getSources(approach, model, level, experiment) #gets the dataSources in each level
             for dataSource in dataSources:
-                writeFile(approach, model, level, dataSource, writer)
+                writeFile(approach, model, level, dataSource, writer, experiment)
         
             # print("mse = ", format(RMSE, ".4f"), " -- pearsonr = ", pearsonr)
             
@@ -113,13 +113,28 @@ def saveDoc(approach, levels, model):
         
 
 if __name__ == "__main__":
+    
+    parser = argparse.ArgumentParser(description="enter makeFile Arguments")
+    parser.add_argument("-experiment", type = str, help = "which experiment : [ 'EXP-with-stans-features','EXP-without-stans-features', 'EXP-without-stans-features-noFeatureReduction',  'all-data-stacked-TrainData' ] ", default = "EXP-with-stans-features")
+    args = parser.parse_args()
+    experiment = args.experiment
+
     approaches = parameters["-approach"]
     levels = parameters["-level"]
     models = parameters["-model"]
     
+    if "all-data-stacked" in experiment:
+        levels = ["level1"]
+        
+    if "SVR" in experiment:
+        models = ["SVR"]
+    elif "RF" in experiment:
+        models = ["RF"]
+    # print("dataSources = ", )
+    
     for approach in approaches:
         for model in models:
-            saveDoc(approach, levels, model)
+            saveDoc(approach, levels, model, experiment)
     
     
     
