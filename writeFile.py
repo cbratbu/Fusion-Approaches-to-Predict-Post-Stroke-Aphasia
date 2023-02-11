@@ -32,14 +32,14 @@ output_file_path = PATH + "results/"
 
 num_ranks = 3
 
-def writeResults(predictionModel, approaches, level):
+def writeResults(predictionModel, approaches, level, experiment):
     """Writes the top-3 best prediction outputs in each of the top-k feature setting 
     
     """
     # for level in parameters["-level"]:
 
     for approach in approaches:
-        output_file = output_file_path + approach + "/" + predictionModel + "_predictions/" + predictionModel + "_" + level + "_final.csv"
+        output_file = output_file_path + experiment + "/" + approach + "/" + predictionModel + "_predictions/" + predictionModel + "_" + level + "_final.csv"
         with open(output_file,"w", newline='') as csvfile:
             writer = csv.writer(csvfile, delimiter=',',
                                     quotechar='|', quoting=csv.QUOTE_MINIMAL)
@@ -48,12 +48,12 @@ def writeResults(predictionModel, approaches, level):
                                                                             "train MAE", "validate MAE", "test MAE",
                                                                             "train MAE rank", "validate MAE rank", "test MAE rank", "SupportVectors", "model parameters", "PARAM1", "PARAM2", "PARAM3", "PARAM4"])
                                                                             
-            files = os.listdir(PATH + "results/" + approach + "/" + predictionModel + "_predictions" + "/" + level + "/")
-            dataFolders = [f for f in files if not os.path.isfile(PATH + "results/" + approach + "/" + predictionModel + "_predictions" + "/" + level + "/"+ f)] # data sources
+            files = os.listdir(PATH + "results/" + experiment + "/" + approach + "/" + predictionModel + "_predictions" + "/" + level + "/")
+            dataFolders = [f for f in files if not os.path.isfile(PATH + "results/" + experiment + "/" + approach + "/" + predictionModel + "_predictions" + "/" + level + "/"+ f)] # data sources
             print("data folders = ", dataFolders)
             
             for dataFolder in dataFolders: 
-                results_folder = PATH + "results/" + approach + "/" + predictionModel + "_predictions" + "/" + level + "/" + dataFolder  + "/model_performances"  # check only if path exists.
+                results_folder = PATH + "results/" + experiment + "/" + approach + "/" + predictionModel + "_predictions" + "/" + level + "/" + dataFolder  + "/model_performances"  # check only if path exists.
                 files = [f for f in listdir(results_folder + "/") if isfile(join(results_folder + "/", f))]
                 
                 for file in files:
@@ -97,38 +97,47 @@ def writeResults(predictionModel, approaches, level):
                                                                                                                         train_MAE_rank, validate_MAE_rank, test_MAE_rank,support_vectors, param_dict])
     
 
-def writeFiles(predictionModel, approaches, level):
+def writeFiles(predictionModel, approaches, level, experiment):
     for approach in approaches:
-        files = os.listdir(PATH + "results/" + approach + "/" + predictionModel + "_predictions" + "/" + level + "/")
+        files = os.listdir(PATH + "results/" + experiment + "/" +approach + "/" + predictionModel + "_predictions" + "/" + level + "/")
         # print("path here = ", PATH + "results/" + approach + "/" + predictionModel + "_predictions" + "/" + level + "/")
-        dataFolders = [f for f in files if not os.path.isfile(PATH + "results/" + approach + "/" + predictionModel + "_predictions" + "/" + level + "/" + f)]    # data sources
+        dataFolders = [f for f in files if not os.path.isfile(PATH + "results/" + experiment + "/" + approach + "/" + predictionModel + "_predictions" + "/" + level + "/" + f)]    # data sources
         # print("dataFolders here = ", dataFolders)
         # for level in parameters["level"]:
-        output_file = output_file_path + approach + "/" + predictionModel + "_predictions/" + predictionModel + "_" + level + "_final.csv"                 # final output file 
+        output_file = output_file_path + experiment + "/" + approach + "/" + predictionModel + "_predictions/" + predictionModel + "_" + level + "_final.csv"                 # final output file 
         totalData = pd.read_csv(output_file)     
         for source in dataFolders:
             data = totalData[totalData["data source"] == source]
             data = data[data["model"] == predictionModel]
-            data.to_csv(PATH+"results/"  + approach + "/"  + predictionModel + "_predictions"+ "/" + level + "/" + source + "/"+ source + "_aggregate.csv")
+            data.to_csv(PATH+"results/"  + experiment + "/" + approach + "/"  + predictionModel + "_predictions"+ "/" + level + "/" + source + "/"+ source + "_aggregate.csv")
         
         
-def modelWiseUpdate(predictionModels, approaches, level):
+def modelWiseUpdate(predictionModels, approaches, level, experiment):
+    # for experiment in experiments:
+    # Update from here onwards.
     for predictionModel in predictionModels:
-        writeResults(predictionModel, approaches, level) # compiles the aggregation of aggregate. 
-        writeFiles(predictionModel, approaches, level)  # compiles aggregate performances for each predictor varying with parameter sizes
+        writeResults(predictionModel, approaches, level, experiment) # compiles the aggregation of aggregate. 
+        writeFiles(predictionModel, approaches, level, experiment)  # compiles aggregate performances for each predictor varying with parameter sizes
         
     
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="enter network arguments")
     parser.add_argument("-level", type = str, help = "enter level : [level1, level2] ", default = "level1")
+    parser.add_argument("-experiment", type = str, help = "enter level : [level1, level2] ", default = "EXP-with-stans-features")
     args = parser.parse_args()
     level = args.level
+    experiment = args.experiment
     
     predictionModels = parameters["-model"]
     approaches = parameters["-approach"]
+    
+    if "SVR" in experiment:
+        predictionModels = ["SVR"]
+    elif "RF" in experiment:
+        predictionModels = ["RF"]
     # print(Augmentation_settings["approach"])
     # print(Augmentation_settings["level"])
-    modelWiseUpdate(predictionModels, approaches, level)
+    modelWiseUpdate(predictionModels, approaches, level, experiment)
     
     
     
