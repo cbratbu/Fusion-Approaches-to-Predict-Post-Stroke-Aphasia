@@ -8,7 +8,7 @@ import pathlib
 PATH =  "/projectnb/skiran/saurav/Fall-2022/src2/"
 
 datasets = ["RS", "FA", "PSW", "PSG", "DM", "stan_optimal"] # "LS",
-experiments = ["EXP-normal-all-data-imposter" ] # EXP-normal-all-data #"EXP-with-stans-features","EXP-without-stans-features", "EXP-without-stans-features-noFeatureReduction",  "all-data-stacked-TrainData", "EXP-stans-features", "EXP-all-data-stacked-F", "EXP-noStan-resting-state-reduce-SVR-A", "EXP-noStan-RS-PSW-PSG-reduce-RF-A"
+experiments = ["EXP-without-stans-features"] # EXP-normal-all-data-imposter , EXP-normal-all-data #"EXP-with-stans-features","EXP-without-stans-features", "EXP-without-stans-features-noFeatureReduction",  "all-data-stacked-TrainData", "EXP-stans-features", "EXP-all-data-stacked-F", "EXP-noStan-resting-state-reduce-SVR-A", "EXP-noStan-RS-PSW-PSG-reduce-RF-A"
 # experiments = ["with_stans_features", "without_stans_features"]
 
 parameters = {
@@ -20,10 +20,10 @@ parameters = {
                 "-data" : None, #["RS"],#, "stan_optimal", "LS"],#, "stan_optimal", "LS"],#["RS", "stan_optimal", "LS"]
                 "-features_R" : ["pearson"], #["pearson", "RFE"],
                 "-frstep" : [1],
-                "-approach" : [ "EF", "LF"], # "LF"],# "LF"],# "EF"],# "EF"],# "EF",, "LF"],#, "EF"],#["LF"], #, "EF"]   # early fusion not implemented yet.
+                "-approach" : [ "EF", "LF"],# "LF"], # "LF"],# "LF"],# "EF"],# "EF"],# "EF",, "LF"],#, "EF"],#["LF"], #, "EF"]   # early fusion not implemented yet.
                 "-level" : ["level1", "level2"],# "level2"],
                 "-experiment" : None,
-                "-feature_base" : ["entire-data"] #entire-data
+                "-feature_base" : ["train-data"] #entire-data, train-data
                 # "-experiment" : None
                 #['True', ''], # [True, ''],
                 # "-same_split": ['True', ''], #[True, ''],
@@ -32,13 +32,13 @@ parameters = {
 
 features = {
             "stan_optimal" : [20],#,20],
-            "RS" : [10,20,25,40,50,80,100,150,200,250,275],#,320,370,400,500],#,600,800,1000],
+            "RS" : [4,6,8,10,20,25,40,50,60,80,100,120,130,140,150,170,200,210,230,250],#,265,275,320,370,380,410], #,400,450,470,485,500,550,600,670,750,800,850,900,950,1000,1100,1200,1225],
             "LS" : [1],#[5,10,20,25,40,50,80,100],
             "MM" : [len(datasets)],
             
             "FA" : [2,4,6,8,10,12],
-            "PSW" : [2,4,8,12,16,20,25,32,36],
-            "PSG" : [2,4,8,16,25,32,40,48,55,69],
+            "PSW" : [2,4,8,10,12,14,16, 18,20,22,24,25,27,29,31,32,34,36],
+            "PSG" : [2,4,8,10,12,14,16, 18,20,22,24,25,27,29,31,32,34,36,38,40,42,44,46,48,50,52,54,55,57,59,61,63,65,67,69],
             # "LS" : [1], # taking long time to run with SVR. Check later
             "DM" : [1,2,3],
             
