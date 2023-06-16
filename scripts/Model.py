@@ -400,7 +400,10 @@ class Model:
             if self.stratified != True: 
                 if self.cv != "LOO":
                     # kf2 = KFold(n_splits=self.CV_(), shuffle = False) ## Change Here
-                    kf2 = KFold(n_splits = len(data), shuffle=False)
+                    if "normal" in self.experiment:
+                        kf2 = KFold(n_splits=self.CV_(), shuffle=False)
+                    else:
+                        kf2 = KFold(n_splits = len(data), shuffle=False)
                     class_labels = outputs
             else:
                 
@@ -495,8 +498,10 @@ class Model:
         """
         
         if self.stratified!=True:
-            # kf = KFold(n_splits=11, shuffle = False) ## Change Here
-            kf = KFold(n_splits=len(self.data), shuffle = False)
+            if "normal" in self.experiment:
+                kf = KFold(n_splits=11, shuffle = False) ## Change Here
+            else:
+                kf = KFold(n_splits=len(self.data), shuffle = False)
             class_labels = self.outputs
         else:
             kf = StratifiedKFold(n_splits=11, shuffle = False)
