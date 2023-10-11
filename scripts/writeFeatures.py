@@ -4,6 +4,7 @@ import os
 from make import *
 import argparse
 import collections
+from tqdm import tqdm
 # from params import *
 
 final_path = "/projectnb/skiran/saurav/Fall-2022/src2/results/"
@@ -12,8 +13,8 @@ data_path = "/projectnb/skiran/saurav/Fall-2022/src2/data/"
 # files = datasets
 
 
-def getBestParams(dataSource, predictionModel, level, approach, experiment):
-    output_file = final_path + experiment + "/" + approach + "/" + predictionModel + "_predictions" + "/" + level  + "/" +  dataSource + "/"  + dataSource + "_aggregate.csv"
+def getBestParams(dataSource, predictionModel, level, approach, experiment, fold):
+    output_file = final_path + experiment + "/" + approach + "/" + predictionModel + "_predictions" + "/" + level  + "/" +  dataSource + "/"  + "fold-" + str(fold) + "/" + dataSource + "_aggregate.csv"
     # print("output file = ", output_file)
     data = pd.read_csv(output_file,  delimiter=",")
     #
@@ -39,6 +40,12 @@ def getBestParams(dataSource, predictionModel, level, approach, experiment):
     
         match_number = re.compile('-?\ *[0-9]+\.?[0-9]*(?:[Ee]\ *-?\ *[0-9]+)?')
         final_list = [float(x) for x in re.findall(match_number, word)]
+        
+        for i,x in enumerate(final_list):
+            if type(x) == int or type(x) == float:
+                if x < 0 and x%1 == 0:
+                    x = int(x)
+                    final_list[i] = x
     
         if len(param) > 1:
             fname += "[" + param[0][0] + "-" + param[1] + "]" + "_"
@@ -60,9 +67,9 @@ def getBestParams(dataSource, predictionModel, level, approach, experiment):
 
 
 
-def getBestModel(dataSource, predictionModel, level, approach, experiment):
+def getBestModel(dataSource, predictionModel, level, approach, experiment, fold):
     best_model = ""
-    data = pd.read_csv(final_path + experiment + "/" + approach + "/" + predictionModel + "_predictions" +"/" + level + "/" + dataSource + "/" + dataSource+"_aggregate.csv")
+    data = pd.read_csv(final_path + experiment + "/" + approach + "/" + predictionModel + "_predictions" +"/" + level + "/" + dataSource + "/" + "fold-" + str(fold) + "/" + dataSource+"_aggregate.csv")
     data = data.sort_values(by = "validate RMSE")
     data = data[data["model"] == predictionModel]
     model_params = data.iloc[0,1:6]
@@ -75,7 +82,7 @@ def getBestModel(dataSource, predictionModel, level, approach, experiment):
 
 
 
-def getOutputFname(dataSources, predictionModel, approach, level, experiment):
+def getOutputFname(dataSources, predictionModel, approach, level, experiment, fold):
     print("approach = ", approach)
     if approach == "LF":
         os.makedirs(data_path + experiment + "/" + "lateFusionData/" + predictionModel + "/", exist_ok = True)
@@ -103,8 +110,9 @@ def getOutputFname(dataSources, predictionModel, approach, level, experiment):
 
 
 
-def organizeOutputData(datapath, path_, bestModel):
+def organizeOutputData(datapath, path_, bestModel, fold):
 
+    print("datapath = ",datapath)
     data = pd.read_csv(datapath, sep = " ", header = None)
     temp = data.values.flatten()
     temp = dict(collections.Counter(temp).most_common())
@@ -125,18 +133,20 @@ def organizeOutputData(datapath, path_, bestModel):
     
     
         
-def saveBestFiles(predictionModel, dataSources, level, experiment):
+def saveBestFiles(predictionModel, dataSources, level, experiment, fold):
     approaches = parameters["-approach"]
+    # bestfeaturePaths = []
     for approach in approaches:
         for source in dataSources:
-            bestParams = getBestParams(source, predictionModel, level, approach, experiment) # gets you the best training parameters for a dataSource with certain prediction model
-            bestModel = getBestModel(source, predictionModel, level, approach, experiment) # need to update what this does. 
+            bestParams = getBestParams(source, predictionModel, level, approach, experiment, fold) # gets you the best training parameters for a dataSource with certain prediction model
+            bestModel = getBestModel(source, predictionModel, level, approach, experiment, fold) # need to update what this does. 
             
-            featureSavePath =  final_path + experiment + "/" + approach + "/" + predictionModel + "_predictions/" + level + "/" + source + "/" 
-            path_ = final_path + experiment + "/" + approach + "/" + predictionModel + "_predictions/" + level + "/" + source + "/"  + "features/" + bestModel + "/" 
+            featureSavePath =  final_path + experiment + "/" + approach + "/" + predictionModel + "_predictions/" + level + "/" + source + "/" + "fold-" + str(fold) + "/" 
+            path_ = final_path + experiment + "/" + approach + "/" + predictionModel + "_predictions/" + level + "/" + source + "/" + "fold-" + str(fold) + "/"  + "features/" + bestModel + "/" 
             datapath = path_ + bestParams
-            organizeOutputData(datapath, featureSavePath, bestModel)
-            
+            # bestFeaturePaths.append(featureSavePath)
+            organizeOutputData(datapath, featureSavePath, bestModel, fold)
+            # return bestFeaturePaths
     
     
     
@@ -155,18 +165,94 @@ def saveBestOutputs_dataSourceCombinations(dataSources, predictionModels, level,
             dataSourcesCombinations += list(map(list,list(itertools.combinations(dataSources, i))))
             
     # print(dataSourcesCombinations)
-        
-    for dataSources in dataSourcesCombinations:
+    
+    nfolds = None
+    if "normal" in experiment:
+        nfolds = 12
+    else:
+        nfolds = 56
+
+    for dataSources in tqdm(dataSourcesCombinations):
         for predictionModel in predictionModels:
-            # print("this executing??")
-            if level == "level1":
-                saveBestFiles(predictionModel, dataSources, level, experiment)
-            elif level == "level2":
-                dataSources = sorted([x.split("_")[0] for x in dataSources])
-                # if len(dataSources) != len(datasets) and ("EXP-without-stans-features" not in experiment):
-                dataSources = ["-".join(dataSources)  + "_results"] 
-                saveBestFiles(predictionModel, dataSources, level, experiment)
-                    
+            
+            
+            for fold in range(1,nfolds,1):
+                if level == "level1":
+                    saveBestFiles(predictionModel, dataSources, level, experiment, fold)
+                elif level == "level2":
+                    dataSources = sorted([x.split("_")[0] for x in dataSources])
+                    # if len(dataSources) != len(datasets) and ("EXP-without-stans-features" not in experiment):
+                    dataSources = ["+".join(dataSources)  + "_results"] 
+                    saveBestFiles(predictionModel, dataSources, level, experiment, fold)
+
+
+def count_occurrences(lst):
+    # Sort the list to group identical elements together
+    sorted_lst = sorted(lst)
+    
+    # Use groupby to group identical elements
+    grouped = groupby(sorted_lst)
+    
+    # Create a dictionary to store the counts
+    counts = {}
+    
+    # Iterate over the grouped elements and count occurrences
+    for key, group in grouped:
+        counts[key] = len(list(group))
+    
+    return counts
+
+
+def getBestFeatures(predictionModel, dataSources, level, experiment, fold):
+    # best_model = ""
+    data = pd.read_csv(final_path + experiment + "/" + approach + "/" + predictionModel + "_predictions" +"/" + level + "/" + dataSource + "/" + "fold-" + str(fold) + "/" + "bestFeatureSet.csv")
+    bestFeatures = list(data["features"].values)
+
+    return bestFeatures
+
+
+    # data = data.sort_values(by = "validate RMSE")
+    # data = data[data["model"] == predictionModel]
+    # model_params = data.iloc[0,1:6]
+    
+    # for param in model_params.index:
+    #     best_model += str(model_params[param]) + "_"
+    
+    # best_model = best_model[:-1]
+    # return best_model
+
+
+
+
+def combine_features(dataSources, predictionModels, level , experiment):
+    dataSourcesCombinations = []
+
+    for i in range(1,len(dataSources)+1):
+        dataSourcesCombinations += list(map(list, list(itertools.combinations(dataSources, i))))
+
+    nfolds = None
+
+    if "normal" in experiment:
+        nfolds = 12
+    else:
+        nfolds = 56
+
+    for dataSources in tqdm(dataSourcesCombinations):
+        for predictionModel in predictionModels:
+            bestFoldFeatures = []
+            for fold in range(1,nfolds,1):
+                bestFoldFeature = getBestFeatures(predictonModel, dataSources, level, experiment, fold)
+                bestFoldFeatures += bestFoldFeatures
+
+            feature_counts = count_occurrences(bestFoldFeatures)
+            feature_counts = pd.DataFrame(feature_counts, columns = ["feature", "frequency"])
+            feature_counts.to_csv(final_path + experiment + "/" + approach + "/" + predictionModel + "_predictions" +"/" + level + "/" + dataSource + "/" + "featureOccurances.csv")
+            # print("save path = ", final_path + experiment + "/" approach + "/" + predictionModel + "_predictions" + "/" + level + "/" + dataSource + "/" + "featureOccurances.csv" )
+            # feature_counts.to_csv(final_path + experiment + "/" approach + "/" + predictionModel + "_predictions" + "/" + level + "/" + dataSource + "/" + "featureOccurances.csv" )
+
+
+
+
 
 
 
@@ -204,8 +290,12 @@ if __name__ == "__main__":
     # for predictionModel in predictionModels:
     #     saveBestFiles(predictionModel, dataSources)
         
+        
+    print(dataSources)    
     saveBestOutputs_dataSourceCombinations(dataSources, predictionModels, level, experiment)
-    
+
+    if level == "level1":
+        combine_features(dataSources, predictionModels, level, experiment)
     
     
     
