@@ -10,6 +10,10 @@ def getModel(model):
     elif model == "RF":
         # print("model called = RF")
         return RandomForestRegressor
+    elif model == "AdaBoost":
+        return AdaBoostRegressor
+    elif model == "GradBoost":
+        return lgb.LGBMRegressor
 
 
 def allParams(model):
@@ -17,5 +21,9 @@ def allParams(model):
         return SVR_params
     elif model == "RF":
         return RFParams
+    elif model == "AdaBoost":
+        return ABParams
+    elif model == "GradBoost":
+        return GBParams
 
     

@@ -5,49 +5,28 @@ def createF(path):
     if not os.path.exists( path):
         os.makedirs(path,exist_ok=True)
 
-def create_folder(data, type = None):
+def create_folder(data, type = None, model = None, level=None, approach=None, experiment=None, fold=None):
     
-    rspath = PATH
+    rspath = PATH 
     rsopath = PATH
     rsfpath = PATH
     
+    model_path = model if model != None else ""
+    level_path = level if level!=None else ""
+    approach_path = approach if approach !=None else ""
+    experiment = experiment if experiment != None else ""
+    
     if data == "stan_optimal":
-        # if not os.path.exists(PATH + "results/stan_results/model_performances"):
-        #     os.makedirs(PATH + "results/stan_results/model_performances")
-        rspath += "results/stan_results/model_performances"
-        rsopath += "results/stan_results/outputs"
-        rsfpath += "results/stan_results/features"
+        rspath += "results/" + experiment + "/" + approach_path + "/" + model_path + "_predictions" + "/" + level_path + "/" + "stan_results/" + "fold-" + str(fold)    + "/model_performances" 
+        rsopath += "results/" + experiment + "/" + approach_path + "/" + model_path + "_predictions"  + "/" + level_path + "/" + "stan_results/" + "fold-" + str(fold)  + "/outputs" 
+        rsfpath += "results/" + experiment + "/" + approach_path + "/" + model_path + "_predictions"  + "/" + level_path + "/" + "stan_results/"+ "fold-" + str(fold)   + "/features" 
         
     
     else:
-        # if not os.path.exists(PATH + "results/" + data + "_results/model_performances"):
-        #     os.makedirs(PATH + "results/" + data + "_results/model_performances")
-        rspath += "results/"+ data+ "_results/model_performances"
-        rsopath += "results/" + data + "_results/outputs"
-        rsfpath += "results/" + data + "_results/features"
+        rspath += "results/" + experiment + "/" + approach_path + "/" + model_path  + "_predictions"  + "/" +  level_path + "/" + data + "_results/" + "fold-" + str(fold)    + "/model_performances" 
+        rsopath += "results/" + experiment + "/" + approach_path + "/" + model_path  + "_predictions"  + "/" + level_path + "/" + data + "_results/" + "fold-" + str(fold) + "/outputs" 
+        rsfpath += "results/" + experiment + "/" + approach_path + "/" + model_path  + "_predictions"  + "/" + level_path + "/" + data + "_results/" + "fold-" + str(fold) + "/features" 
     
-    # if type == "features":
-    #     return rsfpath
-    
-        
-    
-    # if data == "RS":
-    #     if not os.path.exists(PATH + "results/RS_results/model_performances/"):
-    #         os.makedirs(PATH + "results/RS_results/model_performances")
-    #     rspath += "results/RS_results/model_performances/"
-    #     rsopath += "results/RS_results/outputs"
-        
-    # elif data == "stan_optimal":
-    #     if not os.path.exists(PATH + "results/stan_results/model_performances/"):
-    #         os.makedirs(PATH + "results/stan_results/model_performances")
-    #     rspath += "results/stan_results/model_performances/"
-    #     rsopath += "results/stan_results/outputs"
-    
-    # elif data == "LS":
-    #     if not os.path.exists(PATH + "results/LS_results"):
-    #         os.makedirs(PATH + "results/LS_results/model_performances")
-    #     rspath += "results/LS_results/model_performances/"
-    #     rsopath += "results/LS_results/outputs"
     
     if type == "performance":
         createF(rspath)
@@ -58,4 +37,8 @@ def create_folder(data, type = None):
         return rsfpath
         
     return rspath
+    
+    
+# def getBestModalitytFeatureset():
+    
         

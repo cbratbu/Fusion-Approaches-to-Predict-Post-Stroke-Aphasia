@@ -11,7 +11,11 @@ from utils import *
 def save_file(model, Augmentation_settings):
 
     # result_save_path = PATH + "results/model_performances/"
-    result_save_path = create_folder(Augmentation_settings["data"], "performance")
+    model_ = Augmentation_settings["model"]
+    level_ = Augmentation_settings["level"]
+    approach_ = Augmentation_settings["approach"]
+    experiment_ = Augmentation_settings["experiment"]
+    result_save_path = create_folder(Augmentation_settings["data"], "performance", model_, level_, approach_, experiment_)
     As = Augmentation_settings
 
     if As["Cross Validation Type"] == "kTkV" or As["metric"] == "all-metrics":
@@ -46,10 +50,14 @@ if __name__ == "__main__":
     parser.add_argument("-data", nargs = "?", type = str, help = "Choose data to train the models on [RS , WM-GM-CSF spared]", default = "RS")
     parser.add_argument("-features_R", nargs = "?", type = str, help = "feature reduction method [pearson , RFE]")
     parser.add_argument("-frstep", nargs = "?", type = int, help = "number of features reduced per step", default = 1)
+    parser.add_argument("-approach", nargs = "?", type = str, help = "prediction approach : [Late Fusion, Early Fusion] - [LF, EF]", default = "LF")
+    parser.add_argument("-level", nargs = "?", type = str, help = "LF, EF level: [level1, level2]", default = "level1")
+    parser.add_argument("-experiment", nargs = "?", type = str, help = "what experiment to run: [with_stans_features, without_stans_features]", default = "EXP-with-stans-features")
+    parser.add_argument("-feature_base", nargs = "?", type = str, help = "feature reduction based on data: [entire-data, training-data]", default = "entire-data")
+    
     
     # parser.add_argument("-order", nargs = "?", type = str, help = "stratified [ascending/descending] order ", default = None)
     args = parser.parse_args()
-
                 
 
     # print("args = ", args )
@@ -77,7 +85,13 @@ if __name__ == "__main__":
         "data" : args.data,
         
         "feature reduction" : args.features_R,
-        "features reduced per step" : args.frstep if 'frstep' in args else 1
+        "features reduced per step" : args.frstep if 'frstep' in args else 1,
+        
+        "approach" : args.approach if "approach" in args else "LF",
+        "level" : args.level if "level" in args else "level1",
+
+        "experiment" : args.experiment if "experiment" in args else "EXP-with-stans-features",
+        "feature base" : args.feature_base if "feature_base" in args else "entire-data"
         # "order" : args.order if 'stratified' in args else None, #implement false condition
     }
 
@@ -85,5 +99,5 @@ if __name__ == "__main__":
     # print("vals = ", Augmentation_settings["top_k"])
     
     model = Model(Augmentation_settings)
-    save_file(model, Augmentation_settings)
+    # save_file(model, Augmentation_settings)
 
