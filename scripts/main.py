@@ -58,7 +58,6 @@ if __name__ == "__main__":
     
     # parser.add_argument("-order", nargs = "?", type = str, help = "stratified [ascending/descending] order ", default = None)
     args = parser.parse_args()
-
                 
 
     # print("args = ", args )
@@ -100,5 +99,5 @@ if __name__ == "__main__":
     # print("vals = ", Augmentation_settings["top_k"])
     
     model = Model(Augmentation_settings)
-    save_file(model, Augmentation_settings)
+    # save_file(model, Augmentation_settings)
 

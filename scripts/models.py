@@ -12,6 +12,8 @@ def getModel(model):
         return RandomForestRegressor
     elif model == "AdaBoost":
         return AdaBoostRegressor
+    elif model == "GradBoost":
+        return lgb.LGBMRegressor
 
 
 def allParams(model):
@@ -21,5 +23,7 @@ def allParams(model):
         return RFParams
     elif model == "AdaBoost":
         return ABParams
+    elif model == "GradBoost":
+        return GBParams
 
     
