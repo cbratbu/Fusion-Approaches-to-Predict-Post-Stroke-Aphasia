@@ -1,0 +1,12 @@
+qsub /projectnb/skiran/saurav/Fall-2022/src2/experiment_jobs/EXP-final-RF-normal/seperate_jobs/EXP-final-RF-normal_1.sh
+qsub /projectnb/skiran/saurav/Fall-2022/src2/experiment_jobs/EXP-final-RF-normal/seperate_jobs/EXP-final-RF-normal_2.sh
+qsub /projectnb/skiran/saurav/Fall-2022/src2/experiment_jobs/EXP-final-RF-normal/seperate_jobs/EXP-final-RF-normal_3.sh
+qsub /projectnb/skiran/saurav/Fall-2022/src2/experiment_jobs/EXP-final-RF-normal/seperate_jobs/EXP-final-RF-normal_4.sh
+qsub /projectnb/skiran/saurav/Fall-2022/src2/experiment_jobs/EXP-final-RF-normal/seperate_jobs/EXP-final-RF-normal_5.sh
+qsub /projectnb/skiran/saurav/Fall-2022/src2/experiment_jobs/EXP-final-RF-normal/seperate_jobs/EXP-final-RF-normal_6.sh
+qsub /projectnb/skiran/saurav/Fall-2022/src2/experiment_jobs/EXP-final-RF-normal/seperate_jobs/EXP-final-RF-normal_7.sh
+qsub /projectnb/skiran/saurav/Fall-2022/src2/experiment_jobs/EXP-final-RF-normal/seperate_jobs/EXP-final-RF-normal_8.sh
+qsub /projectnb/skiran/saurav/Fall-2022/src2/experiment_jobs/EXP-final-RF-normal/seperate_jobs/EXP-final-RF-normal_9.sh
+qsub /projectnb/skiran/saurav/Fall-2022/src2/experiment_jobs/EXP-final-RF-normal/seperate_jobs/EXP-final-RF-normal_10.sh
+qsub /projectnb/skiran/saurav/Fall-2022/src2/experiment_jobs/EXP-final-RF-normal/seperate_jobs/EXP-final-RF-normal_11.sh
+qsub /projectnb/skiran/saurav/Fall-2022/src2/experiment_jobs/EXP-final-RF-normal/seperate_jobs/EXP-final-RF-normal_12.sh
