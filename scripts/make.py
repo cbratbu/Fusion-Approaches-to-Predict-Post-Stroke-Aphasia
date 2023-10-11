@@ -7,20 +7,21 @@ import pathlib
 
 PATH =  "/projectnb/skiran/saurav/Fall-2022/src2/"
 
-datasets = ["RS", "FA", "PSW", "PSG", "DM", "stan_optimal"] # "LS",
-experiments = ["EXP-without-stans-features"] # EXP-normal-all-data-imposter , EXP-normal-all-data #"EXP-with-stans-features","EXP-without-stans-features", "EXP-without-stans-features-noFeatureReduction",  "all-data-stacked-TrainData", "EXP-stans-features", "EXP-all-data-stacked-F", "EXP-noStan-resting-state-reduce-SVR-A", "EXP-noStan-RS-PSW-PSG-reduce-RF-A"
+datasets = ["RS", "FA", "PSW", "PSG", "DM", "RS-bet", "RS-deg", "RS-eff", "RS-trans"] # "LS",
+# datasets = ["RS", "FA", "PSW", "PSG", "DM", "RS_bet", "RS_deg", "RS_eff", "RS_trans"] # "LS",
+experiments = ["EXP-final-RF-normal"] # EXP-normal-all-data-imposter , EXP-normal-all-data #"EXP-with-stans-features","EXP-without-stans-features", "EXP-without-stans-features-noFeatureReduction",  "all-data-stacked-TrainData", "EXP-stans-features", "EXP-all-data-stacked-F", "EXP-noStan-resting-state-reduce-SVR-A", "EXP-noStan-RS-PSW-PSG-reduce-RF-A"
 # experiments = ["with_stans_features", "without_stans_features"]
 
 parameters = {
                 "-CV" : ["kTkV"], #["LOO", "LFiveO", "kTkV"],
-                "-model" : ["RF", "SVR"], #, "SVR"],# "SVR"],#"SVR",["RF"],#,"RF","AdaBoost"],#,"SVR"],#["RF", "SVR"], #["RF","SVR"], #["RF", "SVR"],
+                "-model" : ["RF"],#["RF", "SVR", "GradBoost"], #, "SVR"],# "SVR"],#"SVR",["RF"],#,"RF","AdaBoost"],#,"SVR"],#["RF", "SVR"], #["RF","SVR"], #["RF", "SVR"],
                 "-metric" : ["all-metrics"],
-                "-f" :  None,#[5, 10,20,25,40,50,80,100,150,200,250,275,320,370,400,500,600,800,1000,1127], #[10],#,20,25,40,60,80,105], #[5, 10,20,25,40,50,80,100,150,200,250,275,320,370,400,500,600,800,1000,1127]
+                "-f" :  None,#[5,10,20,25,40,50,80,100,150,200,250,275,320,370,400,500,600,800,1000,1127], #[10],#,20,25,40,60,80,105], #[5, 10,20,25,40,50,80,100,150,200,250,275,320,370,400,500,600,800,1000,1127]
                 "-stratified":  [''],
                 "-data" : None, #["RS"],#, "stan_optimal", "LS"],#, "stan_optimal", "LS"],#["RS", "stan_optimal", "LS"]
-                "-features_R" : ["pearson"], #["pearson", "RFE"],
+                "-features_R" : ["pearson"], #["pearson", "RFE", "shap"],
                 "-frstep" : [1],
-                "-approach" : [ "EF", "LF"],# "LF"], # "LF"],# "LF"],# "EF"],# "EF"],# "EF",, "LF"],#, "EF"],#["LF"], #, "EF"]   # early fusion not implemented yet.
+                "-approach" : [ "EF"],# "LF"], # "LF"],# "LF"],# "EF"],# "EF"],# "EF",, "LF"],#, "EF"],#["LF"], #, "EF"]   # early fusion not implemented yet.
                 "-level" : ["level1", "level2"],# "level2"],
                 "-experiment" : None,
                 "-feature_base" : ["train-data"] #entire-data, train-data
@@ -42,6 +43,11 @@ features = {
             # "LS" : [1], # taking long time to run with SVR. Check later
             "DM" : [1,2,3],
             
+            "RS-bet" : [2,5,10,20,30,35,40,45],
+            "RS-deg" : [2,5,10,20,30,35,40,45],
+            "RS-eff" : [2,5,10,20,30,35,40,45],
+            "RS-trans" : [2,5,10,20,30,35,40,45],
+            
             "combined_features": [1290,1310,1330,1345]#[1160,1190,1220,1250,1270] #[920,970,1010,1050,1090,1120,1140]#[590,610,670,720,750,790,830,880]#[210,240,270,290,320,315,340,380,450,490,530,560] #[10,20,30,40,50,70,90,110,130,160,190] #,]
             }
             
@@ -52,7 +58,7 @@ def get_dataset_combinations():
         all_combinations += temp 
 
     for i in range(len(all_combinations)):
-        all_combinations[i] = "-".join(sorted(all_combinations[i]))
+        all_combinations[i] = "+".join(sorted(all_combinations[i]))
         
     len(all_combinations)
     # all_combinations.append("stan_optimal")
@@ -219,7 +225,30 @@ def adjustParams(experiment):
             features["RS"] = [35,37,39,41,43,45,47,49,51,53,55,57,59,61,63,65] #[225,230,235,240,245,250,255,260,265,270,275,280] ##,]
         
     
-    
+
+def split_file(input_file, lines_per_file):
+    with open(input_file, 'r') as file:
+        lines = file.readlines()
+
+    num_lines = len(lines)
+    num_files = (num_lines // lines_per_file) + 1
+
+    print("lines = ", num_lines)
+    print("num files = ", num_files)
+    for i in range(num_files):
+        start = i * lines_per_file
+        end = start + lines_per_file
+        output_file = input_file[:-3] + f'_{i + 1}.sh'
+
+        with open(output_file, 'w') as file:
+            file.writelines(lines[start:end] + ["wait"])
+            # file.writeline
+        
+        os.system("chmod +x " + output_file)
+        print(f'Created file: {output_file}')
+
+    print('File splitting complete.')
+
 
       
 if __name__ == "__main__":
@@ -245,22 +274,25 @@ if __name__ == "__main__":
             write_scripts(args, "level_2", f2, experiment)
     # write_scripts(args, "level_2", f2)
     
-        if args.d == "runSeperate": 
-            f2.write("wait" + "\n")
-            f2.write("python3 " + "writeFile.py" + " -level " + "level1" + " -experiment " + experiment + "\n")
-            f2.write("wait" + "\n")
-            f2.write("python3 " + "scripts/combineOutputs.py" + " -level " + "level1" + " -experiment " + experiment + "\n" )
-            f2.write("wait" + "\n")
-            f2.write("python3 " + "scripts/writeFeatures.py" + " -level " + "level1" + " -experiment " + experiment )
+        # if args.d == "runSeperate": 
+        #     f2.write("wait" + "\n")
+        #     f2.write("python3 " + "writeFile.py" + " -level " + "level1" + " -experiment " + experiment + "\n")
+        #     f2.write("wait" + "\n")
+        #     f2.write("python3 " + "scripts/combineOutputs.py" + " -level " + "level1" + " -experiment " + experiment + "\n" )
+        #     f2.write("wait" + "\n")
+        #     f2.write("python3 " + "scripts/writeFeatures.py" + " -level " + "level1" + " -experiment " + experiment )
             
-        else:
-            f2.write("wait" + "\n")
-            f2.write("python3 " + "writeFile.py" + " -level " + "level2" + " -experiment " + experiment + "\n")
-            f2.write("wait" + "\n")
-            f2.write("python3 " + "writeFeatures.py" + " -level " + "level2" + " -experiment " + experiment)
+        # else:
+        #     f2.write("wait" + "\n")
+        #     f2.write("python3 " + "writeFile.py" + " -level " + "level2" + " -experiment " + experiment + "\n")
+        #     f2.write("wait" + "\n")
+        #     f2.write("python3 " + "writeFeatures.py" + " -level " + "level2" + " -experiment " + experiment)
     
         f2.close()
         os.system("chmod +x " + PATH + "experiment_scripts/" + experiment + "/" + runFname +".sh")
+        
+        lines_per_file = 20 
+        split_file( PATH + "experiment_scripts/" + experiment + "/" + runFname +".sh", lines_per_file)
         
 
     
