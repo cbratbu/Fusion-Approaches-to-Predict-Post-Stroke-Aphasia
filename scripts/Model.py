@@ -98,11 +98,14 @@ class Model:
         self.all_features = pd.Index(self.all_features)
         self.outputs = self.outputs.ravel()
 
-        print("data shape = ", self.data.shape)
-        print("outputs shape = ", self.outputs.shape)
-        print("all features shape here = ", len(self.all_features))
-        print("features", self.num_features)
+        # print("data source = ", self.source)
+        # print("data shape = ", self.data.shape)
+        # print("outputs shape = ", self.outputs.shape)
+        # print("all features shape here = ", len(self.all_features))
+        # print("features", self.num_features)
         
+##################################################################################################
+
         # if self.feature_base == "entire-data" or (self.num_features == -1):
         #     self.saveImpCols()
             
@@ -129,6 +132,8 @@ class Model:
             #     self.data = self.data.drop(["outputs"], axis = 1)
             #     self.data = self.data.values
             
+
+
         self.forward()
 
 
@@ -253,7 +258,10 @@ class Model:
         """
         
         data = pd.DataFrame(data)
-        data = data.iloc[:,self.top_columns]
+        if self.feature_reduction == "pearson":
+            data = data.iloc[:,self.top_columns]
+        elif self.feature_reduction == "shap":
+            data = data[self.top_columns]
         return data.values
         
         
@@ -311,9 +319,14 @@ class Model:
         
         """
         
-        
-        features = self.all_features[self.top_columns]
-        self.feature_writer.writerow(list(features.values))
+        if self.feature_reduction == "pearson":
+            features = self.all_features[self.top_columns]
+            self.feature_writer.writerow(list(features.values))
+                
+        elif self.feature_reduction == "shap":
+            # features = self.top_columns
+            self.feature_writer.writerow(self.top_columns)
+            
         
     
     def feature_close(self):
@@ -434,17 +447,43 @@ class Model:
         self.best_features = None #to keep track of best features
         best_features = []
 
+        # nanvalues = data.isna().sum().sum()
+        # print("nan value count = ", nanvalues)
+        
         for train_index, validate_index in kf2.split(data, class_labels):
 
             X_train, X_validate = data.iloc[train_index], data.iloc[validate_index]
             y_train, y_validate = outputs[train_index], outputs[validate_index]
 
+            # print("X_train shape = ", X_train.shape)
+            # print("X_validate shape = ", X_validate.shape)
+
             self.model = self.get_model(self.m, self.curr_param) # gets the model initialization of "m" type and "curr_param" parameters
             
             if self.level == "level1":
                 if self.feature_base == "train-data":        
-                    if self.num_features!=-1: 
-                        self.top_columns = self.important_columns(X_train,y_train)
+                    if self.num_features!=-1:
+                        if self.feature_reduction != "shap": 
+                            self.top_columns = self.important_columns(X_train,y_train)
+                        elif self.feature_reduction == "shap":
+                            shapModel = self.get_model(self.m, self.curr_param)
+                            shapModel.fit(X_train, y_train)
+                            if self.m == "SVR":
+                                if self.curr_param[0] == "linear":                                    
+                                    #explainer = shap.LinearExplainer(shapModel, X_train, feature_perturbation = "independent")
+                                    explainer = shap.Explainer(shapModel, X_train, algorithm="linear", feature_perturbation="interventional")
+                                    shap_values = explainer.shap_values(X_validate)
+                                elif self.curr_param[0] == "rbf":                                                                
+                                    explainer = shap.KernelExplainer(shapModel.predict, shap.sample(X_train, 20))
+                                    shap_values = explainer.shap_values(X_validate)
+                            elif self.m == "RF":
+                                explainer = shap.Explainer(shapModel, X_train)
+                                shap_values = explainer.shap_values(X_validate, check_additivity=False)
+
+                            op = pd.DataFrame((zip(X_train.columns[np.argsort(np.abs(shap_values).mean(0))], np.abs(shap_values).mean(0))), columns = ["feature", "importance"]).sort_values(by="importance", ascending=False)
+                            self.top_columns = op.iloc[:self.num_features]["feature"].values 
+                            # print("top columns = ", self.top_columns)
+                            self.bfi = op
                         X_train = self.reduce_data(X_train)
                         X_validate = self.reduce_data(X_validate)
     
@@ -497,6 +536,7 @@ class Model:
             float, float, float, float, float, float, object: trainMSE, testMSE, valMSE, trainMAE, valMAE, testMAE, best test model.
         """
         
+        
         if self.stratified!=True:
             if "normal" in self.experiment:
                 kf = KFold(n_splits=11, shuffle = False) ## Change Here
@@ -537,7 +577,23 @@ class Model:
             
                 X_train, X_test = self.data.iloc[train_index], self.data.iloc[test_index]
                 y_train, y_test = self.outputs[train_index], self.outputs[test_index]
-    
+                
+                dataColumns = list(X_train.columns)
+
+                # scaler = StandardScaler()
+                # X_train = scaler.fit_transform(X_train)
+                # X_test = scaler.transform(X_test)
+
+                X_train = pd.DataFrame(X_train, columns = dataColumns)
+                X_test = pd.DataFrame(X_test, columns = dataColumns)
+
+                if self.approach == "EF" and self.level == "level2":
+                    X_train = X_train[self.all_features[self.fold -1]]
+                    X_test = X_test[self.all_features[self.fold -1]]
+
+                # X_test = scaler.transform(X_test) 
+
+
                 train_performance, validate_performance, train_performance_MAE, validate_performance_MAE, model, bestFeatures = self.validate(X_train, y_train)
     
                 if self.level == "level1":
