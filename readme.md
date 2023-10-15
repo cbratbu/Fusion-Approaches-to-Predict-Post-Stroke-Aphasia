@@ -1,5 +1,5 @@
-Parameter Understanding 
+This is a repository for the Prediction of Aphasia severity through fusion approaches. 
 
-random Forest : { "depth", "Parameter Split per node" }
+We use a proposed Supervised Feature Selection algorithm to select features in our approaches. 
 
-SVM : {“Kernel”, “C”, “epsilon”, “tol”, “gamma”}
+(more details to be added soon)
